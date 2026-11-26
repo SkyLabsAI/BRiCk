@@ -17,8 +17,9 @@ This note proposes how to lift that restriction. It covers:
 - candidate encodings with their trust cost;
 - the gate witnesses the design must refute.
 
-Writing it turned up two gate passes (SkyLabsAI/auto#752) against today's rules for classes *without* virtual
-bases (see "Gate passes against today's rules").
+Writing it turned up two gate passes (SkyLabsAI/auto#752) against the `Gstruct` rules for classes *without*
+virtual bases (see "Gate passes against the former `Gstruct` rules"). Stage 0, in SkyLabsAI/BRiCk#564 with
+SkyLabsAI/auto#756 (merged 2026-11-26), fixes them.
 
 Code references are to branch `claude/virtual-bases` (#487), which is not yet on
 `paolo/agent-staging`.
@@ -44,8 +45,9 @@ Code references are to branch `claude/virtual-bases` (#487), which is not yet on
   constructor writes the vptrs, the subobject's state is `Unsettled`. In that window clang may
   already have written the enclosing class's vptrs and gcc has not (witness 9). The call is
   undefined there ([class.base.init]/18), so dispatch must be stuck.
-- **Destructors** set the phase of one base subtree right before that base's destructor. Today's
-  rule reverts all bases at once, and that is already refuted by compiled code (candidate B).
+- **Destructors** set the phase of one base subtree right before that base's destructor. The
+  `Gstruct` rule reverted all bases at once, which compiled code refutes (candidate B); stage 0
+  (SkyLabsAI/BRiCk#564) makes it per base.
 - **Dispatch searches the whole hierarchy of the phase class** for the final overrider. It is
   not limited to the classes on the path. The overrider's `this` is the overrider's subobject of the
   phase object. It is reached through `vbase_ptr` when that subobject lies in a virtual base (a
@@ -268,8 +270,8 @@ virtual base to its own phase before destroying it. So between `R`'s destructor 
 moves from phase `R` to phase `L`.
 
 Doing it per base matters. While `B2` is destroyed, both compilers still have `C`'s vtable in the
-slot of `B1`, which has not been destroyed yet. Today's single revert has already put `B1` back in
-phase `B1` (candidate B).
+slot of `B1`, which has not been destroyed yet. The former single revert of the `Gstruct` rules had
+already put `B1` back in phase `B1` (candidate B; fixed by SkyLabsAI/BRiCk#564).
 
 **Where the rules agree with compiled code.** Settled tokens describe what every compiler's slot
 holds, in the states the rules reach. The [class.cdtor]/4 example (`D : A, B` with
@@ -372,8 +374,9 @@ Axiom vptrR_agree : ...
 - **Drop `tu_no_vtables`** from `wp_vstruct_initializer_list` and from the `Gvstruct` case of
   `wp_dtor`.
 - **`wpi_nv_bases` and `wpi_bases`.** After each base initializer, take that base's tokens and make
-  them `Unsettled` (§2). This applies to the `Gstruct` rules too: today's `wp_init_identity` leaves
-  them in the base's phase (candidate A).
+  them `Unsettled` (§2). This applies to the `Gstruct` rules too: the former `wp_init_identity` left
+  them in the base's phase (candidate A). Stage 0 does this for `Gstruct` with
+  `wp_unsettle_identity` (SkyLabsAI/BRiCk#564).
 - **`wp_vstruct_initializer_list`.** Replace `this |-> vptrR cls 1$m -* …` with
   `wp_set_identity tu cls this`. It consumes the tokens of all dynamic subobjects, in any state, and
   returns them settled in phase `cls`.
@@ -383,7 +386,8 @@ Axiom vptrR_agree : ...
   - `wp_init_identity` in the `Gstruct` case becomes the special case without virtual bases.
 - **`wp_dtor`, both `Gstruct` and `Gvstruct`.** After the members, and right before each base
   destructor, apply `wp_set_identity tu B (this ,, _base cls B)`. This replaces the single
-  `wp_revert_identity` of the `Gstruct` case (candidate B). At the end, consume
+  `wp_revert_identity` of the `Gstruct` case (candidate B; stage 0 does it for `Gstruct` with
+  `wpd_base` and `wp_settle_identity`). At the end, consume
   `this |-> vptrR cls (Settled (phase cls …)) 1$m`, as now.
 - **`wp_destroy_vstruct`.** Before each virtual base's destructor, set that virtual base's subtree
   to its own phase.
@@ -476,11 +480,24 @@ Notes on witness 7:
 - The rows above are compiler behaviour. Whether this is a known Itanium ABI defect, and whether
   to report it upstream, is tracked in SkyLabsAI/BRiCk#562.
 
-### Gate passes against today's rules
+### Gate passes against the former `Gstruct` rules
 
 These need no virtual bases. Both programs terminate as described in the `fm-default` container.
 Both are gate passes: SkyLabsAI/auto#752 proves `denoteModule source |-- test_post_False` for each
-(`tests/unsound/ctor_early_vptr` and `tests/unsound/dtor_revert_identity`).
+(rows 68 and 69, `tests/unsound/ctor_early_vptr` and `tests/unsound/dtor_revert_identity`). The
+merged witnesses keep the mechanisms below but not the globals, since `test()` has no precondition:
+row 68 passes `this` to `B2(B1*)`, and row 69 keeps the pointers in a local `Box`.
+
+**Status: fixed by stage 0**, SkyLabsAI/BRiCk#564 with SkyLabsAI/auto#756 (merged 2026-11-26; client adaptations
+in SkyLabsAI/bluerock.bhv#123 and SkyLabsAI/bluerock.NOVA#46). auto#756 turns rows 68 and 69 into
+compiled regressions that `Fail` at `C()` and `~C()`, and adds `tests/virtual/identity_windows`,
+which checks the defined calls positively. Stage 0 encodes `Unsettled` as the existing empty-path
+token `derivationR cls nil`, which `resolve_virtual` cannot dispatch on, so it adds no predicate
+and no axiom. In destructors it unsettles every base right after the members, and settles each base
+right before its own destructor. That is stricter than "the bases not yet destroyed stay in phase
+`cls`", and loses no defined call: a call through a sibling base during a base destructor is
+undefined ([class.cdtor]/4). Stage 1 should keep the same choice for `Gvstruct`, or justify a
+different one.
 
 - **A: early vptr write in `Gstruct` constructors.**
   - The program: `B1` saves `g_b1 = this` and has `virtual int f()` returning 1; `C : B1, B2`
@@ -519,7 +536,9 @@ to `Gstruct`. They are independent of virtual bases.
 ## Staged plan
 
 0. **`Gstruct` identity windows** (independent of virtual bases): an `Unsettled` state after each
-   base constructor, and a per-base revert in destructors (candidates A and B).
+   base constructor, and a per-base revert in destructors (candidates A and B). Implemented in
+   SkyLabsAI/BRiCk#564 and SkyLabsAI/auto#756 (merged 2026-11-26), with `Unsettled` as the empty-path token. A
+   fresh-context review found it sound (comment on SkyLabsAI/BRiCk#564).
 1. **Constructors and destructors with vtables.**
    - Encoding B, with `derivationR` as a definition over `vptrR`. This is needed because `basic_ios`
      is a polymorphic `Gstruct` virtual base.
@@ -539,8 +558,8 @@ to `Gstruct`. They are independent of virtual bases.
 
 ## Open questions for Paolo
 
-1. **Order.** Candidates A and B are gate passes (SkyLabsAI/auto#752). Should stage 0 come first,
-   as its own PR, before any virtual-base work?
+1. **Order.** *Answered:* stage 0 came first, as its own PRs (SkyLabsAI/BRiCk#564,
+   SkyLabsAI/auto#756), before any virtual-base work.
 2. **Retire `mdc_path`.** Should it become a definition over `vptrR` (encoding B, with a model for
    `vptrR`)? The alternative is two `Parameter`s (A).
 3. **The uninitialized token.** Keep `derivationR cls nil` in `struct_defR`, with a "not
