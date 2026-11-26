@@ -15,7 +15,7 @@
 
     <<typeid>> of a null polymorphic glvalue throws <<std::bad_typeid>>
     ([expr.typeid]/3); that case has no rule, as no [derivationR] exists for
-    it. Both rules are stuck on types outside [typeid_ok].
+    it. Both rules are [UNSUPPORTED] on types outside [typeid_ok].
 
     [specs/type_info.v] specifies <<std::type_info::operator==>>.
  *)
@@ -26,6 +26,11 @@ Require Import skylabs.lang.cpp.logic.pred.
 Require Import skylabs.lang.cpp.logic.heap_pred.
 Require Import skylabs.lang.cpp.logic.wp.
 Require Import skylabs.lang.cpp.logic.dispatch.
+Require Import skylabs.iris.extra.bi.errors.
+
+#[local] Arguments ERROR {_ _} _%_bs.
+#[local] Arguments UNSUPPORTED {_ _} _%_bs.
+#[local] Arguments UNREACHABLE {_ _} _%_bs.
 
 (** ** The types that [type_infoR] identifies
 
@@ -36,7 +41,7 @@ Require Import skylabs.lang.cpp.logic.dispatch.
     that no other C++ type prints like, in any translation unit.
 
     [typeid_ok ty] is a conservative allowlist of such printed types: both
-    <<typeid>> rules are stuck on other types. It accepts
+    <<typeid>> rules are [UNSUPPORTED] on other types. It accepts
     - builtin arithmetic, character, [bool], [void] and <<std::nullptr_t>>
       types;
     - classes and enumerations whose name is built only from identifiers
@@ -112,11 +117,11 @@ Module Type Expr__typeid.
     #[local] Notation wp_glval := (wp_glval tu ρ).
 
     (** A type, or an expression that is not evaluated ([expr.typeid]/5-7).
-        The rule is stuck on types outside [typeid_ok]. *)
+        The rule is [UNSUPPORTED] on types outside [typeid_ok]. *)
     Axiom wp_lval_typeid_type : forall ty t Q,
           (if typeid_ok ty
            then Forall p : ptr, p |-> type_infoR ty -* Q p FreeTemps.id
-           else False)
+           else UNSUPPORTED ("typeid: type outside typeid_ok", ty))
       |-- wp_lval (Etypeid (inl ty) t) Q.
 
     (** A glvalue of polymorphic class type ([expr.typeid]/4): the type of the
@@ -131,10 +136,10 @@ Module Type Expr__typeid.
               | most_derived :: _ =>
                   if typeid_ok (Tnamed most_derived)
                   then Forall ti : ptr, ti |-> type_infoR (Tnamed most_derived) -* Q ti free
-                  else False
-              | [] => False
+                  else UNSUPPORTED ("typeid: dynamic type outside typeid_ok", most_derived)
+              | [] => UNREACHABLE "typeid: empty most-derived path"
               end))
-      | _ => False
+      | _ => ERROR "typeid: polymorphic operand of non-class type"
       end
       |-- wp_lval (Etypeid (inr e) t) Q.
   End with_resolve.
