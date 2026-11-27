@@ -647,7 +647,11 @@ Clang's AST does not express this copy: it gives these members an empty
 body (constructors) or <<return *this;>> (assignment operators) because
 clang's code generator performs the copy at the call site. cpp2v
 therefore prints them as [Defaulted], and [wp_union_copy] gives them
-their meaning.
+their meaning. An AST that gives them clang's body as [CompilerProvided]
+(as cpp2v did before) gets the same meaning: like clang's code generator,
+[wp_method] and [wp_ctor] ignore that body. So a [Defaulted] declaration
+refines any [CompilerProvided] definition of the same member, as
+[sub_module] assumes.
 
 The state of a union object in this logic is [unionR] together with its
 active member (if any). Copying the object representation of [src] into
@@ -760,22 +764,18 @@ parameters.
 *)
 #[local] Definition wp_method' `{Σ : cpp_logic, σ : genv} (u : bool) (tu : translation_unit)
     (m : Method) (args : list ptr) (Q : ptr -> epred) : mpred :=
-  match m.(m_body) with
-  | None => ERROR "wp_method: no body"
-  | Some (UserDefined body | CompilerProvided body) =>
+  let wp_body (body : Stmt) :=
     match args with
     | thisp :: rest_vals =>
       let ρ va := Remp (Some thisp) va m.(m_return) in
       letI* ρ, cleanup := bind_vars tu m.(m_arity) m.(m_params) rest_vals ρ in
       |> wp tu ρ body (Kcleanup tu cleanup $ Kreturn m.(m_return) $ fun x => |={top}=>?u |> Q x)
     | _ => ERROR "wp_method: no arguments"
-    end
-  | Some Defaulted =>
-    (* A union's defaulted copy or move assignment operator (see
-       [wp_union_copy] and [wp_union_self_copy]). It returns a reference to
-       the destination. *)
-    match args, tu.(types) !! m.(m_class) with
-    | [thisp; srcp], Some (Gunion un) =>
+    end%I
+  in
+  (* A union's copy or move assignment operator (see [wp_union_copy] and
+     [wp_union_self_copy]). It returns a reference to the destination. *)
+  let wp_union_assign (un : decl.Union) (thisp srcp : ptr) :=
       let ty := Tnamed m.(m_class) in
       let K : mpred := (|={top}=>?u |> Forall p : ptr, p |-> primR (Tref ty) 1$m (Vref thisp) -* Q p)%I in
       (thisp |-> anyR ty 1$m **
@@ -788,7 +788,28 @@ parameters.
       (* Self-assignment: [srcp] refers to [thisp] itself. *)
       |>
       ((Exists q, srcp |-> primR (Tref ty) q (Vref thisp) ** True) //\\
-       wp_union_self_copy m.(m_class) un thisp K)
+       wp_union_self_copy m.(m_class) un thisp K)%I
+  in
+  match m.(m_body) with
+  | None => ERROR "wp_method: no body"
+  | Some (UserDefined body) => wp_body body
+  | Some (CompilerProvided body) =>
+    (* A compiler-provided method with a single argument besides [this] is a
+       copy or move assignment operator. For a union, clang's body does not
+       perform the copy (see [wp_union_copy]), so it is ignored, like clang's
+       code generator does, and the semantics is that of [Defaulted]. *)
+    match args with
+    | [thisp; srcp] =>
+      match tu.(types) !! m.(m_class) with
+      | Some (Gunion un) => wp_union_assign un thisp srcp
+      | Some (Gstruct _ | Gopaque _) => wp_body body
+      | _ => ERROR ("wp_method: compiler-provided method of a non-record", m.(m_class))
+      end
+    | _ => wp_body body
+    end
+  | Some Defaulted =>
+    match args, tu.(types) !! m.(m_class) with
+    | [thisp; srcp], Some (Gunion un) => wp_union_assign un thisp srcp
     | _, _ => UNSUPPORTED "wp_method: defaulted methods"
     end
   end.
@@ -805,33 +826,49 @@ Section wp_method.
   Context `{Σ : cpp_logic, σ : genv}.
   Implicit Types (Q : ptr -> epred).
 
+  #[local] Ltac union_assign_frame :=
+    let src := fresh "src" in
+    iIntros "[[A wp]|wp]";
+    [ iLeft; iFrame "A"; iNext; iDestruct "wp" as (src) "wp"; iExists src;
+      iSplit; [by iDestruct "wp" as "[$ _]"|]; iDestruct "wp" as "[_ wp]"
+    | iRight; iNext;
+      iSplit; [by iDestruct "wp" as "[$ _]"|]; iDestruct "wp" as "[_ wp]" ].
+
+  #[local] Ltac body_frame :=
+    iApply bind_vars_frame; [done|]; iIntros (??) "wp !>"; iRevert "wp";
+    iApply wp_frame; [done|]; iIntros (?);
+    iApply Kcleanup_frame; [done|];
+    iApply Kreturn_frame.
+
   Lemma wp_method_frame tu tu' m args Q Q' :
     sub_module tu tu' ->
     Forall p, Q p -* Q' p
     |-- wp_method tu m args Q -* wp_method tu' m args Q'.
   Proof.
-    intros. iIntros "HQ". rewrite wp_method.unlock.
+    intros Hsub. iIntros "HQ". rewrite wp_method.unlock.
     destruct m as [m_return m_class m_this_qual m_params m_cc m_arity m_exception m_attrs m_body]; cbn.
     destruct m_body as [[|body|body]|]; auto.
-    { destruct args as [|thisp [|srcp [|??]]]; auto.
+    - destruct args as [|thisp [|srcp [|??]]]; auto.
       destruct (tu.(types) !! m_class) as [[|un| | | | | |]|] eqn:Hun;
         try (iIntros "H"; iDestruct (UNSUPPORTED_elim with "H") as "[]").
       erewrite sub_module_preserves_gunion; [|done..].
-      iIntros "[[A wp]|wp]".
-      - iLeft. iFrame "A". iNext. iDestruct "wp" as (src) "wp". iExists src.
-        iSplit; first by iDestruct "wp" as "[$ _]". iDestruct "wp" as "[_ wp]".
-        iApply (wp_union_copy_frame with "[HQ] wp").
-        iIntros ">wp !> !> %p R". iApply "HQ". by iApply "wp".
-      - iRight. iNext.
-        iSplit; first by iDestruct "wp" as "[$ _]". iDestruct "wp" as "[_ wp]".
-        iApply (wp_union_self_copy_frame with "[HQ] wp").
-        iIntros ">wp !> !> %p R". iApply "HQ". by iApply "wp". }
-    all: destruct args as [|thisp rest_vals]; auto.
-    all: iApply bind_vars_frame; [done|]; iIntros (??) "wp !>"; iRevert "wp".
-    all: iApply wp_frame; [done|]; iIntros (?).
-    all: iApply Kcleanup_frame; [done|].
-    all: iApply Kreturn_frame; iIntros (?) "Q".
-    all: iApply ("HQ" with "Q").
+      union_assign_frame;
+        [iApply (wp_union_copy_frame with "[HQ] wp")|iApply (wp_union_self_copy_frame with "[HQ] wp")];
+        iIntros ">wp !> !> %p R"; iApply "HQ"; by iApply "wp".
+    - destruct args as [|thisp [|srcp [|??]]]; auto.
+      2:{ destruct (tu.(types) !! m_class) as [[|un|st| | | | |o]|] eqn:Hun;
+            try (iIntros "H"; iDestruct (ERROR_elim with "H") as "[]").
+          - erewrite sub_module_preserves_gunion; [|done..].
+            union_assign_frame;
+        [iApply (wp_union_copy_frame with "[HQ] wp")|iApply (wp_union_self_copy_frame with "[HQ] wp")];
+        iIntros ">wp !> !> %p R"; iApply "HQ"; by iApply "wp".
+          - erewrite sub_module_preserves_gstruct; [|done..].
+            body_frame; iIntros (?) "Q"; iApply ("HQ" with "Q").
+          - erewrite sub_module_preserves_gopaque; [|done..].
+            body_frame; iIntros (?) "Q"; iApply ("HQ" with "Q"). }
+      all: body_frame; iIntros (?) "Q"; iApply ("HQ" with "Q").
+    - destruct args as [|thisp rest_vals]; auto.
+      body_frame; iIntros (?) "Q"; iApply ("HQ" with "Q").
   Qed.
 
   (** Unsupported *)
@@ -846,22 +883,21 @@ Section wp_method.
     rewrite wp_method.unlock.
     destruct m as [m_return m_class m_this_qual m_params m_cc m_arity m_exception m_attrs m_body]; cbn.
     destruct m_body as [[|body|body]|]; auto.
-    { destruct args as [|thisp [|srcp [|??]]]; auto.
-      case_match; auto. case_match; auto.
-      iIntros "[[A wp]|wp]".
-      - iLeft. iFrame "A". iNext. iDestruct "wp" as (src) "wp". iExists src.
-        iSplit; first by iDestruct "wp" as "[$ _]". iDestruct "wp" as "[_ wp]".
-        iApply (wp_union_copy_frame with "[] wp").
-        iIntros "wp !> !> %p R". by iApply "wp".
-      - iRight. iNext.
-        iSplit; first by iDestruct "wp" as "[$ _]". iDestruct "wp" as "[_ wp]".
-        iApply (wp_union_self_copy_frame with "[] wp").
-        iIntros "wp !> !> %p R". by iApply "wp". }
-    all: destruct args as [|thisp rest_vals]; auto.
-    all: iApply bind_vars_frame; [done|]; iIntros (??) "wp !>"; iRevert "wp".
-    all: iApply wp_frame; [done|]; iIntros (?).
-    all: iApply Kcleanup_frame; [done|].
-    all: iApply Kreturn_frame; auto.
+    - destruct args as [|thisp [|srcp [|??]]]; auto.
+      destruct (tu.(types) !! m_class) as [[|un| | | | | |]|]; auto.
+      union_assign_frame;
+        [iApply (wp_union_copy_frame with "[] wp")|iApply (wp_union_self_copy_frame with "[] wp")];
+        iIntros "wp !> !> %p R"; by iApply "wp".
+    - destruct args as [|thisp [|srcp [|??]]]; auto.
+      2:{ destruct (tu.(types) !! m_class) as [[|un|st| | | | |o]|]; auto.
+          - union_assign_frame;
+        [iApply (wp_union_copy_frame with "[] wp")|iApply (wp_union_self_copy_frame with "[] wp")];
+        iIntros "wp !> !> %p R"; by iApply "wp".
+          - body_frame; auto.
+          - body_frame; auto. }
+      all: body_frame; auto.
+    - destruct args as [|thisp rest_vals]; auto.
+      body_frame; auto.
   Qed.
 
   Lemma wp_method_elim tu m args Q :
@@ -1139,14 +1175,10 @@ that implies [type_ptr].
 *)
 #[local] Definition wp_ctor' `{Σ : cpp_logic, σ : genv} (u : bool) (tu : translation_unit)
     (ctor : Ctor) (args : list ptr) (Q : ptr -> epred) : mpred :=
-  match ctor.(c_body) with
-  | None => ERROR "wp_ctor: no body"
-  | Some Defaulted =>
-    (* A union's defaulted copy or move constructor (see [wp_union_copy]).
-       Like every constructor, it requires the *entire* block of memory
-       [tblockR] that the object will use. *)
-    match args, tu.(types) !! ctor.(c_class) with
-    | [thisp; srcp], Some (Gunion un) =>
+  (* A union's copy or move constructor (see [wp_union_copy]). Like every
+     constructor, it requires the *entire* block of memory [tblockR] that the
+     object will use. *)
+  let wp_union_copy_ctor (un : decl.Union) (thisp srcp : ptr) :=
       let ty := Tnamed ctor.(c_class) in
       thisp |-> tblockR ty 1$m **
       |>
@@ -1155,56 +1187,73 @@ that implies [type_ptr].
       (Exists src : ptr,
         ((Exists q, srcp |-> primR (Tref ty) q (Vref src) ** True) //\\
          wp_union_copy ctor.(c_class) un src thisp
-           (|={top}=>?u |> Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -* Q p)))
+           (|={top}=>?u |> Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -* Q p)))%I
+  in
+  let wp_body (ib : list Initializer * Stmt) :=
+      let inits := ib.1 in
+      let body := ib.2 in
+      match args with
+      | thisp :: rest_vals =>
+        let ty := Tnamed ctor.(c_class) in
+        match tu.(types) !! ctor.(c_class) with
+        | Some (Gstruct cls) =>
+          (*
+          this is a structure.
+
+          We require that you give up the *entire* block of memory
+          [tblockR] that the object will use.
+          *)
+          thisp |-> tblockR ty 1$m **
+          |>
+          let ρ vap := Remp (Some thisp) vap Tvoid in
+          letI* ρ, cleanup := bind_vars tu ctor.(c_arity) ctor.(c_params) rest_vals ρ in
+          letI* := wp_struct_initializer_list tu cls ρ ctor.(c_class) thisp inits in
+          letI* := wp tu ρ body in
+          letI* := Kcleanup tu cleanup in
+          letI* := Kreturn_void in
+          |={top}=>?u |> Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -* Q p
+
+        | Some (Gunion union) =>
+          (*
+          this is a union.
+
+          We require that you give up the *entire* block of memory
+          [tblockR] that the object will use.
+          *)
+          thisp |-> tblockR ty 1$m **
+          |>
+          let ρ vap := Remp (Some thisp) vap Tvoid in
+          letI* ρ, cleanup := bind_vars tu ctor.(c_arity) ctor.(c_params) rest_vals ρ in
+          letI* := wp_union_initializer_list tu union ρ ctor.(c_class) thisp inits in
+          letI* := wp tu ρ body in
+          letI* := Kcleanup tu cleanup in
+          letI* := Kreturn_void in
+          |={top}=>?u |> Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -* Q p
+
+        (* This includes [Gopaque]: a constructor initializes the members and
+           bases, which an opaque record does not describe. Constructors of
+           opaque records can be specified and called, but not verified. *)
+        | _ => ERROR ("wp_ctor: constructor for non-aggregate", ctor.(c_class))
+        end
+      | _ => ERROR "wp_ctor: constructor without leading [this] argument"
+      end%I
+  in
+  match ctor.(c_body) with
+  | None => ERROR "wp_ctor: no body"
+  | Some Defaulted =>
+    match args, tu.(types) !! ctor.(c_class) with
+    | [thisp; srcp], Some (Gunion un) => wp_union_copy_ctor un thisp srcp
     | _, _ => UNSUPPORTED "wp_ctor: defaulted constructors"
     end
-  | Some (UserDefined ib | CompilerProvided ib) =>
-    let inits := ib.1 in
-    let body := ib.2 in
-    match args with
-    | thisp :: rest_vals =>
-      let ty := Tnamed ctor.(c_class) in
-      match tu.(types) !! ctor.(c_class) with
-      | Some (Gstruct cls) =>
-        (*
-        this is a structure.
-
-        We require that you give up the *entire* block of memory
-        [tblockR] that the object will use.
-        *)
-        thisp |-> tblockR ty 1$m **
-        |>
-        let ρ vap := Remp (Some thisp) vap Tvoid in
-        letI* ρ, cleanup := bind_vars tu ctor.(c_arity) ctor.(c_params) rest_vals ρ in
-        letI* := wp_struct_initializer_list tu cls ρ ctor.(c_class) thisp inits in
-        letI* := wp tu ρ body in
-        letI* := Kcleanup tu cleanup in
-        letI* := Kreturn_void in
-        |={top}=>?u |> Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -* Q p
-
-      | Some (Gunion union) =>
-        (*
-        this is a union.
-
-        We require that you give up the *entire* block of memory
-        [tblockR] that the object will use.
-        *)
-        thisp |-> tblockR ty 1$m **
-        |>
-        let ρ vap := Remp (Some thisp) vap Tvoid in
-        letI* ρ, cleanup := bind_vars tu ctor.(c_arity) ctor.(c_params) rest_vals ρ in
-        letI* := wp_union_initializer_list tu union ρ ctor.(c_class) thisp inits in
-        letI* := wp tu ρ body in
-        letI* := Kcleanup tu cleanup in
-        letI* := Kreturn_void in
-        |={top}=>?u |> Forall p : ptr, p |-> primR Tvoid 1$m Vvoid -* Q p
-
-      (* This includes [Gopaque]: a constructor initializes the members and
-         bases, which an opaque record does not describe. Constructors of
-         opaque records can be specified and called, but not verified. *)
-      | _ => ERROR ("wp_ctor: constructor for non-aggregate", ctor.(c_class))
-      end
-    | _ => ERROR "wp_ctor: constructor without leading [this] argument"
+  | Some (UserDefined ib) => wp_body ib
+  | Some (CompilerProvided ib) =>
+    (* A compiler-provided union constructor with a single argument besides
+       [this] is a copy or move constructor. clang's body does not perform
+       the copy (see [wp_union_copy]), so it is ignored, like clang's code
+       generator does, and the semantics is that of [Defaulted]. *)
+    match args, tu.(types) !! ctor.(c_class) with
+    | [thisp; srcp], Some (Gunion un) => wp_union_copy_ctor un thisp srcp
+    | _, _ => wp_body ib
     end
   end.
 mlock Definition wp_ctor `{Σ : cpp_logic, σ : genv} :=
@@ -1226,6 +1275,18 @@ Section wp_ctor.
     | |- context [wp_union_initializer_list] => iApply wp_union_initializer_list_frame; [done|]
     end.
 
+  #[local] Ltac union_copy_ctor_frame :=
+    let src := fresh "src" in
+    iIntros "[$ wp] !>"; iDestruct "wp" as (src) "wp"; iExists src;
+    iSplit; [by iDestruct "wp" as "[$ _]"|]; iDestruct "wp" as "[_ wp]".
+
+  #[local] Ltac ctor_body_frame :=
+    iIntros "($ & wp) !>"; iRevert "wp";
+    iApply bind_vars_frame; [done|]; iIntros (??);
+    initializer_list_frame;
+    iApply wp_frame; [done|]; iIntros (?);
+    iApply Kcleanup_frame; [done|].
+
   Lemma wp_ctor_frame tu c args Q Q' :
     (**
     NOTE: We cannot presently weaken by [sub_module tu tu'] due to the
@@ -1237,21 +1298,15 @@ Section wp_ctor.
     iIntros "HQ". rewrite wp_ctor.unlock.
     destruct c as [c_class c_params c_cc c_arity c_exception c_body]; cbn.
     destruct c_body as [[|[inits body]|[inits body]]|]; auto.
-    { destruct args as [|thisp [|srcp [|??]]]; auto.
-      case_match; auto. case_match; auto.
-      iIntros "[$ wp] !>". iDestruct "wp" as (src) "wp". iExists src.
-      iSplit; first by iDestruct "wp" as "[$ _]". iDestruct "wp" as "[_ wp]".
-      iApply (wp_union_copy_frame with "[HQ] wp").
-      iIntros ">wp !> !> %p R". iApply "HQ". by iApply "wp". }
-    all: repeat case_match; auto.
-    all: iIntros "($ & wp) !>"; iRevert "wp".
-    all: iApply bind_vars_frame; [done|]; iIntros (??).
-    all: initializer_list_frame.
-    all: iApply wp_frame; [done|]; iIntros (?).
-    all: iApply Kcleanup_frame; [done|].
-    all: iApply Kreturn_void_frame; iIntros ">HR !> !> % ?".
-    all: iApply "HQ".
-    all: by iApply "HR".
+    all: destruct args as [|thisp [|srcp [|??]]]; auto.
+    all: destruct (tu.(types) !! c_class) as [[|un|st| | | | |]|]; auto.
+    all: first
+      [ union_copy_ctor_frame;
+        iApply (wp_union_copy_frame with "[HQ] wp");
+        iIntros ">wp !> !> %p R"; iApply "HQ"; by iApply "wp"
+      | ctor_body_frame;
+        iApply Kreturn_void_frame; iIntros ">HR !> !> % ?";
+        iApply "HQ"; by iApply "HR" ].
   Qed.
 
   (** Unsupported *)
@@ -1266,20 +1321,15 @@ Section wp_ctor.
     rewrite wp_ctor.unlock.
     destruct c as [c_class c_params c_cc c_arity c_exception c_body]; cbn.
     destruct c_body as [[|[inits body]|[inits body]]|]; auto.
-    { destruct args as [|thisp [|srcp [|??]]]; auto.
-      case_match; auto. case_match; auto.
-      iIntros "[$ wp] !>". iDestruct "wp" as (src) "wp". iExists src.
-      iSplit; first by iDestruct "wp" as "[$ _]". iDestruct "wp" as "[_ wp]".
-      iApply (wp_union_copy_frame with "[] wp").
-      iIntros "wp !> !> %p R". by iApply "wp". }
-    all: repeat case_match; auto.
-    all: iIntros "($ & wp) !>"; iRevert "wp".
-    all: iApply bind_vars_frame; [done|]; iIntros (??).
-    all: initializer_list_frame.
-    all: iApply wp_frame; [done|]; iIntros (?).
-    all: iApply Kcleanup_frame; [done|].
-    all: iApply Kreturn_void_frame; iIntros "HQ !> !> % ?".
-    all: by iApply "HQ".
+    all: destruct args as [|thisp [|srcp [|??]]]; auto.
+    all: destruct (tu.(types) !! c_class) as [[|un|st| | | | |]|]; auto.
+    all: first
+      [ union_copy_ctor_frame;
+        iApply (wp_union_copy_frame with "[] wp");
+        iIntros "wp !> !> %p R"; by iApply "wp"
+      | ctor_body_frame;
+        iApply Kreturn_void_frame; iIntros "HQ !> !> % ?";
+        by iApply "HQ" ].
   Qed.
 
   Lemma wp_ctor_elim tu c args Q :
