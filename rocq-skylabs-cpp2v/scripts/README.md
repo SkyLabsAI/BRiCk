@@ -231,3 +231,17 @@ commands inherit their environment normally. Declare `(env_var NAME)` in Dune
 when an external variable influences an action; no external dependency is needed
 for a fixed value supplied by `setenv`. Do not forward host `PATH` or
 `LD_LIBRARY_PATH` into an image when relying on its toolchain.
+
+## CI compiler routing checks
+
+Commands launched by `cpp2v-run` receive `CPP2V_RUN_ACTIVE=1` in both native
+and Docker modes. Descendants inherit the marker, so running a Python test
+through the runner also marks the compiler processes it launches. The runner
+sets the value itself; callers do not need to forward it with `--env`.
+
+The workspace CI sources `fmdeps/ci/compiler-guard/setup.sh` after environment
+initialization and toolchain bootstrap. Its `clang++` adapter rejects calls
+without this marker, regardless of `-stdlib` flags, and delegates routed calls
+to the recorded compiler. Start Dune outside `cpp2v-run`: marking the entire
+build would defeat this check. This is an accidental-bypass check, not a
+security boundary; hardcoded absolute compiler paths can bypass the adapter.
