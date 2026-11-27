@@ -321,10 +321,12 @@ The identity of an object of class [cls] goes through these states:
 
 - During construction, each base constructor returns its base's identity
   settled with that base as most-derived class.  [wp_unsettle_identity]
-  makes it unsettled right away, and [wp_init_identity] settles the identity
+  makes it unsettled right away, before the temporaries of the base's
+  initializer are destroyed, and [wp_init_identity] settles the identity
   of the whole object only after all bases are initialized.  In between, a
   virtual call through an already-built base is undefined: from the
-  constructor's own ctor-initializer ([class.base.init]/18), or from a later
+  constructor's own ctor-initializer ([class.base.init]/18), including the
+  destructors of a base initializer's temporaries, or from a later
   base's constructor, of which the earlier base is no base
   ([class.cdtor]/4).  Compilers disagree there: Clang writes the derived
   class's vptrs before a base initializer that mentions [this], GCC after
@@ -960,10 +962,22 @@ Definition wpi_bases `{Σ : cpp_logic, σ : genv} (tu : translation_unit)
       *)
       ERROR ("wpi_bases: missing base class initializer: ", cls)
     | i :: nil =>
-      (* there is an initializer for this class; once it returns, the base's
-         identity is unsettled until [wp_init_identity] *)
-      wpi tu ρ cls this (Tnamed b) i
-        (wp_unsettle_identity (this ,, _base cls b) tu b (wpi_bases bases Q))
+      (* there is an initializer for this class.  This is [wpi], except that
+         the base's identity is unsettled as soon as its constructor returns,
+         before the initializer's temporaries are destroyed, and stays
+         unsettled until [wp_init_identity].  The mem-initializer is a
+         full-expression ([class.base.init]/7, [intro.execution]/5.4), so
+         Clang wraps one with temporaries in an [ExprWithCleanups], which
+         cpp2v prints as [Eandclean], and [wp_init_clean] would destroy them
+         inside [wp_initialize], before [wp_unsettle_identity].  That
+         [Eandclean] marks the same full-expression end as this rule, so we
+         drop it and destroy the temporaries here instead. *)
+      (let p := this ,, _base cls b in
+       let e := match i.(init_init) with Eandclean e => e | e => e end in
+       letI* free := wp_initialize tu ρ (Tnamed b) p e in
+       letI* := wp_unsettle_identity p tu b in
+       letI* := interp tu free in
+       wpi_bases bases Q)%I
     | _ :: _ :: _ =>
       (* there are multiple initializers for this, so we fail *)
       ERROR ("wpi_bases: multiple initializers for base: ", cls, b)
@@ -982,8 +996,9 @@ Section with_cpp.
     intros. move: Q Q'. induction bases; intros; first done.
     rewrite/wpi_bases-/(wpi_bases _ _ _ _ _).
     do 2!(case_match; auto). iIntros "?".
-    iApply wpi_frame; [done|].
+    iApply wp_initialize_frame; [done|]. iIntros (free).
     iApply wp_unsettle_identity_frame; [done|].
+    iApply interp_frame_strong; [done|].
     by iApply IHbases.
   Qed.
 End with_cpp.
