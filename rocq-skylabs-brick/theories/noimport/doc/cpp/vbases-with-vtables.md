@@ -186,6 +186,51 @@ So BRiCk has two tokens for one machine word: `mdc_path` for dispatch and `vptrR
 Neither knows about the other, and the rules that update `mdc_path` stop at the first class with
 virtual bases.
 
+## Prior art: brick-lean
+
+[SkyLabsAI/brick-lean](https://github.com/SkyLabsAI/brick-lean) ports BRiCk to Lean and proves its
+rules against an operational machine. Read at commit `64731e5` (2026-11-27).
+
+**What it does not cover.** Classes with virtual bases are modelled for layout only. Construction,
+conversions to a virtual base, and dispatch through one are refused (`docs/FEATURES.md`,
+`docs/MODEL.md`). So construction vtables, phases, thunks and vptr sharing are as open there as
+here.
+
+**What it does settle:**
+
+- **A model for `vbase_ptr`** (`BRiCk/Model/MemInterp.lean`). Pointers there are an allocation plus
+  a path. `vbase_ptr cls vb p pvb` means `pvb = vbaseLoc cls vb p`:
+  - `vbaseLoc` strips the base and derived steps of `p`'s path back to the enclosing complete
+    object (`anchor`);
+  - it then appends one virtual-base step.
+
+  Two laws are proved there, not assumed:
+  - `vbaseLoc_base`: going down through a non-virtual base keeps the same complete object. This is
+    the law whose absence is #549's spec burden; BRiCk only has `vbase_facts_down` inside rules.
+  - `vbaseLoc_vbase`: a virtual base's own virtual bases are relative to the same complete object.
+
+  This is §1's canonical path, and it gives §3 a third option for where `vbase_ptr` comes from.
+- **An aliasing pitfall.** The virtual step is encoded with the same segment constructor as a
+  non-virtual base step. So in `Both : VB, L` with `L : virtual VB`, the two `VB` subobjects would
+  get the same path, and brick-lean refuses such classes (`Examples/VirtualBasesReviewTest.lean`).
+  §1's `vpath` keeps the virtual step in a field of its own for this reason.
+- **A model for the identity token.** `mdc_path` is a per-pointer ghost map (`γident`), matched to a
+  machine field (`MState.idents`). The identity updates are machine steps (`docs/CLASSES.md` §7).
+  Storing §1's `dyn_state` there instead of a path is the model §4 asks for.
+- **Pure virtual functions** (`docs/CLASSES.md`, list item 12; brick-lean's issue bk49 against
+  BRiCk's `resolve_virtual`). BRiCk's `tu_dispatch` never reads purity, so the rule calls the
+  definition of a pure function. brick-lean's `final_overrider` drops pure targets. Purity is read
+  from the class that declares the overrider, which may redeclare as pure what its base defines.
+- **Covariant returns** (item 14). The rule calls the overrider at the type the call names. No spec
+  of the overrider matches that type, so the call is stuck. It is a gap in support, not in
+  soundness.
+- **Candidate A was already on record** (item 13, from a Codex review of 2026-11-13): a call through
+  a sibling base during construction, `SD(int*) : SB(this, out)`, where the machine gives 1 and Clang
+  gives 7. It stayed a known hole. brick-lean's adequacy theorem is relative to its own machine,
+  which follows the logic there, so the theorem never refuted the rule. brick-lean's destructors
+  also revert all bases in one step after the fields, as BRiCk did before stage 0. So candidate B
+  presumably applies there too; this was not run.
+
 ## 1. What `mdc_path` must mean when a virtual base is shared
 
 With `struct G : L, R` and `L, R : virtual VB`, the one `VB` subobject is reached along both
@@ -201,7 +246,10 @@ be canonical. Two candidates:
   Record vpath := { vp_vbase : option globname ; vp_nv : list globname }.
   ```
   that is, optionally a virtual base of the top class, then non-virtual steps. `VB` in `G` is
-  `{| vp_vbase := Some VB; vp_nv := [] |}`. [class.mi]/4 makes this name unique. #487 already
+  `{| vp_vbase := Some VB; vp_nv := [] |}`. [class.mi]/4 makes this name unique. The virtual step
+  needs a field of its own: if it were encoded like a non-virtual step, `Both : VB, L` with
+  `L : virtual VB` would give both `VB` subobjects the same name, which is why brick-lean refuses
+  such classes ("Prior art"). brick-lean's `vbaseLoc` has the same shape otherwise. #487 already
   prints a conversion through a virtual base as one `Cderived2vbase` step to the virtual base,
   followed by ordinary `Cderived2base` steps. Clang's cast paths have the same shape.
 
@@ -301,7 +349,9 @@ form) and would find `VB::f` (witness 1).
   The result is the unique most-derived overrider of `fn` among them. cpp2v can check that it is
   unique; compilers reject programs where it is not. If that overrider is pure, `final_overrider`
   returns `None`, because the machine calls `__cxa_pure_virtual`. This can happen during
-  construction, when the phase class is abstract.
+  construction, when the phase class is abstract. Today's `tu_dispatch` ignores purity altogether.
+  brick-lean has fixed that, reading purity from the class that declares the overrider ("Prior
+  art"), and the fix carries over independently of virtual bases.
 - **`this` adjustment.** The overrider's `this` is the location of the overrider's subobject,
   computed from `di_top` and the returned `vpath`. For a virtual first step it is
   `pvb ,, <non-virtual offsets>` with `vbase_ptr phase VB di_top pvb`. This is the virtual thunk;
@@ -316,12 +366,21 @@ form) and would find `VB::f` (witness 1).
     base `VB` of `di_phase`. It holds in the intended model, since the vtable holds those offsets,
     but it is one more axiom.
 
-  Recommendation: (i) first, and (ii) if clients need it.
+  - (iii) A pointer model in which the location follows from the pointer itself, as brick-lean's
+    `vbaseLoc` ("Prior art"). Then `vbase_ptr` at any subobject, including the transport down
+    through non-virtual bases, is a law of the pointer interface with a model, not a rule premise
+    or an axiom about the token. With structured pointers, `di_top` may also reduce to the phase
+    class plus the path, since the complete object can be read off any subobject pointer. The cost
+    is a model change to BRiCk's pointers, plus the interface laws.
+
+  Recommendation: (i) first. Prefer (iii) to (ii) if BRiCk's pointer model can take
+  `vbaseLoc`'s shape.
 - **Covariant returns through a virtual base** are a *return* thunk: the overrider's result is
   converted with `Cderived2vbase`, which reads the vptr of the *returned* object. The dispatch
   rule must then ask for a fraction of the returned object's `vptrR` (and accept null), exactly as
   `wp_operand_cast_derived2vbase` does (witness 8). `dispatch` does not convert results today, for
-  any covariant return; that gap predates virtual bases.
+  any covariant return; that gap predates virtual bases. brick-lean confirms the call is stuck
+  rather than unsound: no spec of the overrider matches the type the call names.
 
 ## 4. One ownership story for `vptrR` and `mdc_path`
 
@@ -349,7 +408,9 @@ Axiom vptrR_agree : ...
   identity for casts, and witnesses 5 and 6 do the same for dispatch.
 - **A model.** `vptrR` has none today. Giving it one in `simple_pred.v`, a ghost map keyed by
   pointer like `derivation_own`, turns `vptrR_agree` and the existing instances into theorems.
-  Without it, each new instance is an axiom.
+  Without it, each new instance is an axiom. brick-lean's `γident` is such a map, matched to the
+  machine's per-pointer identities, with identity updates as machine steps. Storing a `dyn_state`
+  there instead of a path is the model needed.
 - **Compatibility.**
   - For hierarchies without virtual bases, `derivationR cls (mdc :: rest) q` becomes a
     *definition* at `p`:
@@ -488,6 +549,9 @@ Both are gate passes: SkyLabsAI/auto#752 proves `denoteModule source |-- test_po
 merged witnesses keep the mechanisms below but not the globals, since `test()` has no precondition:
 row 68 passes `this` to `B2(B1*)`, and row 69 keeps the pointers in a local `Box`.
 
+brick-lean had recorded candidate A's mechanism on 2026-11-13 as a known hole, and has candidate
+B's single revert too ("Prior art"). Stage 0 has not been ported there.
+
 **Status: fixed by stage 0**, SkyLabsAI/BRiCk#564 with SkyLabsAI/auto#756 (merged 2026-11-26; client adaptations
 in SkyLabsAI/bluerock.bhv#123 and SkyLabsAI/bluerock.NOVA#46). auto#756 turns rows 68 and 69 into
 compiled regressions that `Fail` at `C()` and `~C()`, and adds `tests/virtual/identity_windows`,
@@ -596,7 +660,8 @@ to `Gstruct`. They are independent of virtual bases.
    The second option is simpler and matches the abstract `tblockR`, but changes `Gstruct` clients
    that rely on `struct_defR`.
 4. **Where `vbase_ptr` comes from at a call through a virtual step:** a premise (no new trust,
-   more spec burden), or an observation law on `vptrR` (one axiom)?
+   more spec burden), an observation law on `vptrR` (one axiom), or a pointer model in which the
+   location follows from the pointer, as brick-lean's `vbaseLoc` (a model change, laws proved)?
 5. **Tokens for `Gstruct` classes** that only inherit virtual functions (no `has_vtable`): add
    them now, or keep the current set until dispatch on such classes is needed?
 6. **Unsettle before a base initializer's temporaries are destroyed?** *Answered:* yes, as a
