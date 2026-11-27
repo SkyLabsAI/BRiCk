@@ -62,7 +62,16 @@ Trusted, and justified by the table above:
 - `size_of` as the allocation size of complete objects (`new`, locals, temporaries).
 - `tblockR ty q` (`logic/heap_pred/block.v`) is `size_of σ ty` bytes (`tblockR_raw_eq`) only when
   `tblockR_raw_type ty`, which holds when `ty` contains no class type, looking through arrays and
-  qualifiers. Objects of class-free type are never potentially overlapping.
+  qualifiers (`class_free_type`, `semantics/types.v`). An object of class-free type is never a base
+  subobject, and the ABI does not reuse its tail even as a `[[no_unique_address]]` member.
+- `type_ptr_obj_repr_byte` (`logic/pred.v`) gives `type_ptr Tbyte (p .[Tbyte ! i])` for each
+  `i < size_of σ ty` only when `class_free_type ty`. So do the lemmas built on it
+  (`type_ptr_obj_repr`, `type_ptr_raw_type_ptrs`, `type_ptr_byte_end`, the `blockR` transports in
+  `logic/object_repr.v`). At a class type it would claim bytes the object may not own, e.g. past the
+  end of the complete object: with clang 22 on x86-64,
+  `struct E {}; struct F {}; struct X : E {}; struct C : X, virtual E { long c; };`
+  `struct P : virtual F { long p; }; struct D : P, C {};` places the `C` base of a 32-byte `D` at
+  offset 16, and `sizeof(C) == 24` would reach byte 39.
 
 Deliberately not trusted:
 - `tblockR (Tnamed cls)` is abstract and unrelated to `size_of σ (Tnamed cls)` ([BRiCk#492](https://github.com/SkyLabsAI/BRiCk/pull/492)).
@@ -82,6 +91,7 @@ Deliberately not trusted:
 1. cpp2v emits `dsize`, `nvsize` and emptiness for each class (clang `getDataSize`, `getNonVirtualSize`,
    `CXXRecordDecl::isEmpty`).
 2. A type-level rule: when `dsize == nvsize == sizeof` and the class is not empty,
-   `tblockR (Tnamed cls)` is `blockR sizeof ** alignedR` at every position.
+   `tblockR (Tnamed cls)` is `blockR sizeof ** alignedR` at every position, and
+   `type_ptr_obj_repr_byte` holds at `Tnamed cls`.
 3. Optionally, evidence of an object's position (complete object, array element or ordinary member).
    With it, other classes own `sizeof` bytes wherever they are not potentially overlapping.

@@ -115,14 +115,10 @@ used before ([blockR sz q ** alignedR al]) satisfies all of these axioms. *)
 Parameter tblockR : forall `{Σ : cpp_logic} {σ : genv} (ty : Rtype) (q : cQp.t), Rep.
 
 (** Types whose [tblockR] is plain bytes: types that contain no class,
-    looking through arrays and qualifiers. Arrays of classes are described
-    element-wise by [tblockR_array_unfold]. *)
-Fixpoint tblockR_raw_type (ty : type) : bool :=
-  match ty with
-  | Tnamed _ => false
-  | Tarray t _ | Tqualified _ t => tblockR_raw_type t
-  | _ => true
-  end.
+    looking through arrays and qualifiers ([class_free_type]). Arrays of
+    classes are described element-wise by [tblockR_array_unfold]. *)
+Definition tblockR_raw_type : type -> bool := class_free_type.
+#[global] Arguments tblockR_raw_type _ /.
 
 Section tblockR.
   Context `{Σ : cpp_logic} {σ : genv}.

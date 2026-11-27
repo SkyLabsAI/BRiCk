@@ -39,7 +39,7 @@ Section with_cpp.
     |-- p' |-> blockR 3 q ** P.
   Proof.
     iIntros "(#C & #T & #T' & B & F)". iFrame "F".
-    iApply (blockR_ptr_congP_transport 3 p p' (Tarray Tbyte 3) q eq_refl with "[$] B").
+    iApply (blockR_ptr_congP_transport 3 p p' (Tarray Tbyte 3) q I eq_refl with "[$] B").
   Qed.
 
   Example transport_empty_byte_block (p p' : ptr) (q : cQp.t) (P : mpred) :
@@ -48,7 +48,7 @@ Section with_cpp.
     |-- p' |-> blockR 0 q ** P.
   Proof.
     iIntros "(#C & #T & #T' & B & F)". iFrame "F".
-    iApply (blockR_ptr_congP_transport 0 p p' (Tarray Tbyte 0) q eq_refl with "[$] B").
+    iApply (blockR_ptr_congP_transport 0 p p' (Tarray Tbyte 0) q I eq_refl with "[$] B").
   Qed.
 
 End with_cpp.

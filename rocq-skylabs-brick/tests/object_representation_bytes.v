@@ -65,7 +65,7 @@ Section byte_typing.
     intros Haid. iIntros "B".
     iDestruct (byte_source_typed aid Haid with "B") as "T".
     have Hrule := type_ptr_obj_repr_byte "unsigned char[2]"%cpp_type
-      (byte_source aid) 0 2 eq_refl ltac:(lia).
+      (byte_source aid) 0 2 I eq_refl ltac:(lia).
     rewrite o_sub_0 // offset_ptr_id in Hrule.
     by iApply Hrule.
   Qed.
@@ -77,7 +77,7 @@ Section byte_typing.
     intros Haid. iIntros "B".
     iDestruct (byte_source_typed aid Haid with "B") as "T".
     have Hrule := type_ptr_obj_repr_byte "unsigned char[2]"%cpp_type
-      (byte_source aid) 1 2 eq_refl ltac:(lia).
+      (byte_source aid) 1 2 I eq_refl ltac:(lia).
     rewrite /byte_source -offset_ptr_dot o_dot_sub /= o_sub_0 // offset_ptr_id in Hrule.
     by iApply Hrule.
   Qed.

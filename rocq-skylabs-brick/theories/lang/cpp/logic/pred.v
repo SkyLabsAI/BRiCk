@@ -630,9 +630,13 @@ Module Type CPP_LOGIC
        Detailed Justification:
        a) From the comment above the axiomatization of [type_ptr]:
           | [type_ptr ty p] asserts that [p] points to a (possibly dead) object of type [ty].
-       b) In [basic.types.general#4] [1] the C++ Standard states that:
-          | The object representation of an object of type T is the sequence of N unsigned
-          | char objects taken up by the object of type T, where N equals sizeof(T).
+       b) In [basic.types.general#2] [1] the C++ Standard states that:
+          | The object representation of a complete object type T is the sequence of N
+          | unsigned char objects taken up by a non-bit-field complete object of type T,
+          | where N equals sizeof(T).
+          A subobject need not take up [sizeof(T)] bytes when it is potentially
+          overlapping, so [type_ptr_obj_repr_byte] requires [class_free_type ty]: objects
+          of those types own [sizeof(T)] bytes wherever they sit.
        d) (NOTE: the C++ Standard lacks language regarding this point) the "object representation"
           for an object pointed to by [ptr] [p] is /also/ accessible via [p].
        e) (a)+(b)+(d) implies that a (potentially dead) object representation for type [ty]
@@ -644,7 +648,7 @@ Module Type CPP_LOGIC
        [type_ptr] explicitly excludes them; validity of past-the-end pointers
        can be established using [type_ptr_valid_plus_one].
 
-       [1] <https://eel.is/c++draft/basic.types.general#4>
+       [1] <https://eel.is/c++draft/basic.types.general#2>
      *)
     Section type_ptr_object_representation.
       (* This section is intended to axiomatize a /sufficient/ and /sound/
@@ -667,6 +671,18 @@ Module Type CPP_LOGIC
       Section conservative.
         Axiom type_ptr_obj_repr_byte :
           forall (ty : Rtype) (p : ptr) (i sz : N),
+            class_free_type ty ->     (* 0) [ty] contains no class, so the object at [p]
+                                            owns [sizeof(ty)] bytes wherever it sits. A class
+                                            object can be a potentially-overlapping subobject
+                                            (a base or a <<[[no_unique_address]]>> member),
+                                            which may own fewer bytes: [sizeof] is "the number
+                                            of bytes occupied by a non-potentially-overlapping
+                                            object" (<https://eel.is/c++draft/expr.sizeof#1>), and
+                                            the object representation is that of a /complete/
+                                            object (<https://eel.is/c++draft/basic.types.general#2>).
+                                            For instance, a base subobject excludes its virtual
+                                            bases, and its last bytes may lie past the end of
+                                            the complete object. See <<noimport/doc/cpp/sizeof.md>>. *)
             size_of σ ty = Some sz -> (* 1) [ty] has some byte-size [sz] *)
             (i < sz)%N ->             (* 2) by (1), [sz] is nonzero and [i] is a
                                             byte-offset into the object rooted at [p ,, o]
@@ -692,17 +708,18 @@ Module Type CPP_LOGIC
       Section all_at_once.
         Lemma type_ptr_obj_repr :
           forall (ty : Rtype) (p : ptr) (sz : N),
+            class_free_type ty ->
             size_of σ ty = Some sz ->
             type_ptr ty p |-- [∗list] i ∈ seqN 0 sz, type_ptr Tbyte (p .[ Tbyte ! Z.of_N i ]).
         Proof.
-          intros * Hsz; iIntros "#tptr".
+          intros * Hty Hsz; iIntros "#tptr".
           iApply big_sepL_intro; iIntros "!>" (k n) "%Hn'".
           assert (lookup (K:=N) (N.of_nat k) (seqN 0%N sz) = Some n)
             as Hn
             by (unfold lookupN, list_lookupN; rewrite Nat2N.id //);
             clear Hn'.
           apply lookupN_seqN in Hn as [? ?].
-          iDestruct (type_ptr_obj_repr_byte ty p n sz Hsz ltac:(lia) with "tptr") as "$".
+          iDestruct (type_ptr_obj_repr_byte ty p n sz Hty Hsz ltac:(lia) with "tptr") as "$".
         Qed.
       End all_at_once.
     End type_ptr_object_representation.
