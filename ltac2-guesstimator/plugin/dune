@@ -1,0 +1,4 @@
+(library
+ (name ltac2_guesstimato_plugin)
+ (public_name ltac2-guesstimator.plugin)
+ (libraries rocq-runtime.plugins.ltac2 guesstimator))
