@@ -1395,16 +1395,43 @@ static const char *supportedFunction(const T &decl, const ASTContext &ctxt) {
     return nullptr;
 }
 
+// BRiCk identifies an entity by its C++ name, while the linker binds the
+// symbol that an asm label names. Another object may define that symbol under
+// a different C++ name (`extern "C" f` for `g() asm("f")`), and the linker may
+// keep that definition (when this one is weak or inline), so the body printed
+// here need not be the code that runs. A declaration that is not a definition
+// stays supported: it carries no code.
+template <typename D> static bool hasAsmLabel(const D &decl) {
+    return llvm::any_of(decl.redecls(), [](const Decl *d) {
+        return d->template hasAttr<AsmLabelAttr>();
+    });
+}
+
+template <typename T>
+static const char *supportedFunctionDef(const T &decl,
+                                        const ASTContext &ctxt) {
+    if (decl.doesThisDeclarationHaveABody() && hasAsmLabel(decl))
+        return "definitions of functions with an asm label are not supported";
+    return supportedFunction(decl, ctxt);
+}
+
+static const char *supportedDestructorDef(const CXXDestructorDecl &decl,
+                                          const ASTContext &) {
+    if (decl.doesThisDeclarationHaveABody() && hasAsmLabel(decl))
+        return "definitions of functions with an asm label are not supported";
+    return nullptr;
+}
+
 static const DeclPrinter Dfunction("Dfunction", "Dtemplated_function",
                                    printFunction,
-                                   supportedFunction<FunctionDecl>);
+                                   supportedFunctionDef<FunctionDecl>);
 static const DeclPrinter Dmethod("Dmethod", "Dtemplated_method", printMethod,
-                                 supportedFunction<CXXMethodDecl>);
+                                 supportedFunctionDef<CXXMethodDecl>);
 static const DeclPrinter Dconstructor("Dconstructor", "Dtemplated_constructor",
                                       printConstructor,
-                                      supportedFunction<CXXConstructorDecl>);
+                                      supportedFunctionDef<CXXConstructorDecl>);
 static const DeclPrinter Ddestructor("Ddestructor", "Dtemplated_destructor",
-                                     printDestructor);
+                                     printDestructor, supportedDestructorDef);
 
 // Variables
 namespace {
@@ -1430,8 +1457,16 @@ static fmt::Formatter &printVar(CoqPrinter &print, const VarDecl &decl,
         return print.output() << "global_init.NoInit";
 }
 } // namespace
+// See [hasAsmLabel] above.
+static const char *supportedVar(const VarDecl &decl, const ASTContext &) {
+    if (decl.hasGlobalStorage() &&
+        decl.isThisDeclarationADefinition() != VarDecl::DeclarationOnly &&
+        hasAsmLabel(decl))
+        return "definitions of variables with an asm label are not supported";
+    return nullptr;
+}
 static const DeclPrinter Dvariable("Dvariable", "Dtemplated_variable", printVar,
-                                   DeclPrinter<VarDecl>::alwaysValid);
+                                   supportedVar);
 
 // Enumerations
 namespace {
@@ -1627,10 +1662,36 @@ public:
 
     // Variables
 
+    // An `extern "C"` name or an asm label that starts with `_Z` can be the
+    // symbol of a C++ entity under its mangled name, here or in another
+    // translation unit, and the linker may then keep either definition
+    // (inline functions are COMDAT). That clash need not show in this
+    // translation unit, so cpp2v refuses the whole unit.
+    static void refuseMangledSymbol(const NamedDecl &decl,
+                                    ClangPrinter &cprint) {
+        auto mangled = [](StringRef sym) { return sym.starts_with("_Z"); };
+        for (auto d : decl.redecls())
+            if (auto label = d->getAttr<AsmLabelAttr>();
+                label && mangled(label->getLabel()))
+                fatal(cprint, loc::of(decl),
+                      "an asm label that starts with `_Z` may name the symbol "
+                      "of another C++ entity");
+        bool externC = false;
+        if (auto fd = dyn_cast<FunctionDecl>(&decl))
+            externC = fd->isExternC();
+        else if (auto vd = dyn_cast<VarDecl>(&decl))
+            externC = vd->isExternC();
+        if (externC && decl.getIdentifier() && mangled(decl.getName()))
+            fatal(cprint, loc::of(decl),
+                  "an `extern \"C\"` name that starts with `_Z` may name the "
+                  "symbol of another C++ entity");
+    }
+
     bool VisitVarDecl(const VarDecl *decl, CoqPrinter &print,
                       ClangPrinter &cprint, const ASTContext &ctxt) {
         if (ClangPrinter::debug && cprint.trace(Trace::Decl))
             cprint.trace("VisitVarDecl", loc::of(decl));
+        refuseMangledSymbol(*decl, cprint);
 
         return Dvariable.print(*decl, print, cprint, ctxt);
     }
@@ -1641,6 +1702,7 @@ public:
                            ClangPrinter &cprint, const ASTContext &ctxt) {
         if (ClangPrinter::debug && cprint.trace(Trace::Decl))
             cprint.trace("VisitFunctionDecl", loc::of(decl));
+        refuseMangledSymbol(*decl, cprint);
         return Dfunction.print(*decl, print, cprint, ctxt);
     }
 
@@ -1648,6 +1710,7 @@ public:
                             ClangPrinter &cprint, const ASTContext &ctxt) {
         if (ClangPrinter::debug && cprint.trace(Trace::Decl))
             cprint.trace("VisitCXXMethodDecl", loc::of(decl));
+        refuseMangledSymbol(*decl, cprint);
         return Dmethod.print(*decl, print, cprint, ctxt);
     }
 

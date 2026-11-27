@@ -14,6 +14,14 @@ of the release, and introduce a new heading.
 `Dunsupported`, instead of exposing them as opaque records. Their argument
 lifetime is unsupported even when their field layout is hidden.
 
+2026.11.25: cpp2v prints the definition of a function, method or variable
+that has an asm label (`int g() __asm__("f")`) as unsupported: BRiCk names the
+entity by its C++ name, while the linker binds the labelled symbol, which
+another object may define. A labelled declaration that is not a definition is
+still printed. cpp2v also refuses a translation unit with an `extern "C"` name,
+or an asm label, that starts with `_Z`, since that can be the mangled symbol of
+another C++ entity.
+
 2026.11.24: `global_ptr_nonnull`, `global_ptr_nonnull_aid` and
 `global_ptr_nonnull_addr` (and `_global_nonnull`) now require
 `defines_symbol tu o = true`: the translation unit defines the symbol, rather

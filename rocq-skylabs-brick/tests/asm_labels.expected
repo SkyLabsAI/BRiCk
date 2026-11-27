@@ -1,0 +1,6 @@
+     = ["definitions of functions with an asm label are not supported"%pstring;
+        "definitions of variables with an asm label are not supported"%pstring;
+        "definitions of functions with an asm label are not supported"%pstring;
+        "unsupported attribute: AsmLabel"%pstring;
+        "unsupported attribute: AsmLabel"%pstring]
+     : check.M
