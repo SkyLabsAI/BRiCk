@@ -2,6 +2,7 @@
  (applies_to :whole_subtree)
  (shell bash)
  (deps
+  %{bin:rocq}
   (package rocq-core)
   (package rocq-runtime)
   (package rocq-stdlib)
