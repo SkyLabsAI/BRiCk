@@ -77,7 +77,8 @@
   (package rocq-skylabs-cpp2v)
   (action
    (chdir ..
-    (bash "make -j8 BUILD_DIR=build-dune &> build-dune/dune.log || { cat build-dune/dune.log; exit 1; }"))))
+    (bash
+     "mkdir -p build-dune/.tmp && MAKEFLAGS= TMPDIR=\"$PWD/build-dune/.tmp\" make -j8 BUILD_DIR=build-dune &> build-dune/dune.log || { cat build-dune/dune.log; exit 1; }"))))
 
  (install
   (section bin)
