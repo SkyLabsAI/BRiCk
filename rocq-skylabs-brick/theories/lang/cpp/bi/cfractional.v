@@ -58,10 +58,14 @@ Notation CFractional5 P := (∀ a b c d e, CFractional (fun q => P q a b c d e))
 (** [CFractional] wrapper suited to avoiding HO unification. *)
 Class AsCFractional {PROP : bi} (P : PROP) (Q : cQp.t -> PROP) (q : cQp.t) : Prop := {
   as_cfractional : P -|- Q q;
-  #[global] as_cfractional_cfractional :: CFractional Q;
+    (** Note: we do not make this field into an instance, because, when [Q] only is given, [q] is
+        arbitrary and the only instances that matter are the ones already in context. For this
+        reason, we provide an explicit [Hint Extern] to perform the lifting when a [AsCFractional]
+        exists in context that we want to use to solve a [CFractional] goal *)
+  as_cfractional_cfractional : CFractional Q;
 }.
 #[global] Hint Mode AsCFractional + ! - - : typeclass_instances.
-#[global] Hint Mode AsCFractional + - + - : typeclass_instances.
+#[global] Hint Mode AsCFractional + - + + : typeclass_instances.
 #[global] Arguments AsCFractional {_} (_ _)%_I _%_Qp : assert.
 
 Ltac solve_as_cfrac := solve [intros; exact: Build_AsCFractional].
@@ -117,6 +121,17 @@ Class CFracValid5 {A B C D E} {PROP : bi} (P : cQp.t -> A -> B -> C -> D -> E ->
 
 Ltac solve_cfrac_valid := solve [intros; constructor; apply _].
 
+
+(** Using AsCFractional to solve CFractional *)
+#[global] Hint Extern 100 (CFractional ?P) =>
+  autoapply @as_cfractional_cfractional with typeclass_instances ;
+  solve [eauto with nocore] : typeclass_instances.
+
+#[global] Instance cfractional_of_as_cfractional {PROP : bi} (P : cQp.t -> PROP) :
+  (forall q, AsCFractional (P q) P q) ->
+  CFractional P.
+Proof. move => Hfoo; apply (as_cfractional_cfractional (AsCFractional := Hfoo 1$m%cQp)). Qed.
+
 (** ** Properties of [CFractional] *)
 Section cfractional.
   Context {PROP : bi}.
@@ -166,7 +181,7 @@ Section cfractional.
 
   #[global] Instance as_cfractional_embed `{!BiEmbed PROP PROP'} P F q :
     AsCFractional P F q -> AsCFractional (embed P) (fun q => embed (F q)) q.
-  Proof. split; [by rewrite ->!as_cfractional | apply _]. Qed.
+  Proof. case => as_frac ? ; split; [by rewrite ->!as_frac | apply _]. Qed.
 
   #[global] Instance cfractional_big_sepL {A} (l : list A) F :
     (∀ k x, CFractional (F k x)) ->

@@ -80,7 +80,7 @@ Section with_cpp.
     CFractional (fun q => as_Rep (P q)).
   Proof. intros HP q1 q2. constructor =>p. by rewrite monPred_at_sep /= HP. Qed.
   #[global] Instance as_Rep_as_cfractional (P : cQp.t -> ptr -> mpred) q :
-    AsCFractional1 P ->
+    CFractional1 P ->
     AsCFractional (as_Rep (P q)) (λ q, as_Rep (P q)) q.
   Proof. solve_as_cfrac. Qed.
 
