@@ -73,18 +73,3 @@
   (package rocq-skylabs-brick)
   (package rocq-skylabs-cpp2v)
   (package rocq-skylabs-brick-cpp-prog)))
-
-; Issue #510: a 1,000,000-byte string literal. The source is generated so
-; that the literal is not checked in.
-
-(rule
- (target long_string_literal.cpp)
- (action
-  (with-stdout-to
-   %{target}
-   (system
-    "printf 'const char *text() { return \"'; printf '%1000000s' '' | tr ' ' a; echo '\"; }'"))))
-
-(cram
- (applies_to long_string_literal)
- (deps long_string_literal.cpp))
