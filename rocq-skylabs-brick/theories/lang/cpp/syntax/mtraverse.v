@@ -381,6 +381,7 @@ Module MTraverse.
       | Cptr2bool => mret Cptr2bool
       | Cderived2base path t => Cderived2base <$> traverse (T:=eta list) traverseT path <*> traverseT t
       | Cbase2derived path t => Cbase2derived <$> traverse (T:=eta list) traverseT path <*> traverseT t
+      | Cderived2vbase t => Cderived2vbase <$> traverseT t
       | Cintegral t => Cintegral <$> traverseT t
       | Cint2bool => mret Cint2bool
       | Cfloat2bool => mret Cfloat2bool
@@ -550,6 +551,12 @@ Module MTraverse.
       | Gtypedef t => Gtypedef <$> traverseT t
       | Gunsupported m => mret $ Gunsupported m
       | Gopaque o => Gopaque <$> traverseOpaque o
+      | Gvstruct vs =>
+          Gvstruct
+            <$> (Build_VStruct
+                   <$> traverseStruct vs.(vs_struct)
+                   <*> traverse (T:=eta list) (prod.traverse traverseCN mret) vs.(vs_vbases)
+                   <*> mret vs.(vs_nv_alignment))
       end.
 
   End traverse.

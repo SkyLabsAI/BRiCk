@@ -411,33 +411,44 @@ void printDependentMember(ClangPrinter &cprint, CoqPrinter &print,
                                expr->template_arguments(), loc::of(expr));
 }
 
-// Whether the class conversion [ce] steps to a virtual base, or out of a class
-// with one. Clang's path to a virtual base skips the classes in between, and
-// cpp2v emits classes with virtual bases as unsupported (see
-// [supportedRecord]), so neither step can be checked against the bases.
-static bool castLeavesVirtualBaseClass(const CastExpr &ce) {
-    QualType derived;
+// Whether the class conversion [ce] takes a step to a virtual base that
+// BRiCk cannot express.
+//
+// Clang's path for a conversion starts at the last virtual step and skips the
+// classes before it. A derived-to-base path whose only virtual step is its
+// first is printed as a [Cderived2vbase] for that step, from the source class
+// to one of its (direct or indirect) virtual bases, and a [Cderived2base] for
+// the other steps, to non-virtual bases (see [castStartsWithVirtualStep]). Clang
+// never builds another path with a virtual step, so the [Cunsupported] for it
+// is a guard. A path whose steps all go to non-virtual bases is
+// complete, and each step has a static offset, also out of a class with
+// virtual bases (whose non-virtual bases are in [vs_struct] of its
+// [Dvstruct]). A base-to-derived conversion never takes a virtual step: the
+// base may not be a virtual base, nor a base of one
+// (https://eel.is/c++draft/expr.static.cast).
+static bool castTakesUnsupportedVirtualStep(const CastExpr &ce) {
+    auto isVirtual = [](const CXXBaseSpecifier *b) { return b->isVirtual(); };
+    auto path = ce.path();
     switch (ce.getCastKind()) {
     case CastKind::CK_DerivedToBase:
     case CastKind::CK_UncheckedDerivedToBase:
-        derived = ce.getSubExpr()->getType();
-        break;
+        return !ce.path_empty() &&
+               llvm::any_of(llvm::drop_begin(path), isVirtual);
     case CastKind::CK_BaseToDerived:
-        derived = ce.getType();
-        break;
+        return llvm::any_of(path, isVirtual);
     default:
         return false;
     }
-    auto cls = derived->isPointerType() ? derived->getPointeeCXXRecordDecl()
-                                        : derived->getAsCXXRecordDecl();
-    for (auto base : ce.path()) {
-        if (base->isVirtual() ||
-            (cls &&
-             llvm::any_of(cls->bases(), [](auto &b) { return b.isVirtual(); })))
-            return true;
-        cls = base->getType()->getAsCXXRecordDecl();
-    }
-    return false;
+}
+
+// Whether the derived-to-base conversion [ce] starts with a step to a virtual
+// base. cpp2v prints that step alone, as a [Cderived2vbase] whose result is
+// the virtual base; the remaining (non-virtual) steps, if any, are an
+// ordinary [Cderived2base] around it.
+static bool castStartsWithVirtualStep(const CastExpr &ce) {
+    return (ce.getCastKind() == CastKind::CK_DerivedToBase ||
+            ce.getCastKind() == CastKind::CK_UncheckedDerivedToBase) &&
+           !ce.path_empty() && (*ce.path_begin())->isVirtual();
 }
 
 fmt::Formatter &ClangPrinter::printDeclType(CoqPrinter &print,
@@ -1650,9 +1661,9 @@ public:
         };
         auto without_type = [&](const char *c) { print.output() << c; };
 
-        if (castLeavesVirtualBaseClass(*ce)) {
+        if (castTakesUnsupportedVirtualStep(*ce)) {
             logging::unsupported()
-                << "unsupported cast through a class with virtual bases"
+                << "unsupported cast to a virtual base"
                 << " (at " << cprint.sourceRange(ce->getSourceRange()) << ")\n";
             print.ctor("Cunsupported", false);
             print.str(ce->getCastKindName()) << fmt::nbsp;
@@ -1712,9 +1723,20 @@ public:
 
         case CastKind::CK_DerivedToBase:
         case CastKind::CK_UncheckedDerivedToBase: {
+            // A first step to a virtual base is printed alone, by
+            // [printVirtualStep]: here, either that step is the whole path,
+            // or this cast is the rest of the path, from the virtual base.
+            auto begin = ce->path().begin();
+            if (castStartsWithVirtualStep(*ce)) {
+                if (ce->path_size() == 1) {
+                    with_type("Cderived2vbase");
+                    break;
+                }
+                ++begin;
+            }
             print.ctor("Cderived2base");
             // note that [path] does *not* include the type of the argument
-            print.list_range(ce->path().begin(), ce->path().end() - 1,
+            print.list_range(begin, ce->path().end() - 1,
                              [&](auto i) {
                                  auto t = i->getType().getTypePtrOrNull();
                                  always_assert(t &&
@@ -1774,7 +1796,7 @@ public:
             printDiscarded(expr->getSubExpr());
         else {
             noteRealignedAddr(expr);
-            cprint.printExpr(print, expr->getSubExpr(), names);
+            printCastOperand(expr);
         }
         print.end_ctor();
     }
@@ -1834,8 +1856,43 @@ public:
             printDiscarded(expr->getSubExpr());
         else {
             noteRealignedAddr(expr);
-            cprint.printExpr(print, expr->getSubExpr(), names);
+            printCastOperand(expr);
         }
+    }
+
+    // The operand of the cast [ce]. When [ce] starts with a step to a virtual
+    // base and goes on to non-virtual bases, [printCast] prints the
+    // non-virtual steps, and the virtual step is a cast of the operand (see
+    // [castStartsWithVirtualStep]).
+    void printCastOperand(const CastExpr *ce) {
+        if (!castStartsWithVirtualStep(*ce) || ce->path_size() == 1 ||
+            castTakesUnsupportedVirtualStep(*ce)) {
+            cprint.printExpr(print, ce->getSubExpr(), names);
+            return;
+        }
+        // The virtual base, with the qualifiers of the result, at the value
+        // category of [ce].
+        auto &ctx = cprint.getContext();
+        auto vbase = (*ce->path_begin())->getType().getUnqualifiedType();
+        auto ty = ce->getType();
+        guard::ctor cast(print, "Ecast");
+        {
+            guard::ctor c(print, "Cderived2vbase", false);
+            if (ty->isPointerType()) {
+                auto quals = ty->getPointeeType().getQualifiers();
+                cprint.printQualType(
+                    print, ctx.getPointerType(ctx.getQualifiedType(vbase, quals)),
+                    loc::of(ce));
+            } else {
+                guard::ctor ref(print, ce->isLValue() ? "Tref" : "Trv_ref",
+                                false);
+                cprint.printQualType(
+                    print, ctx.getQualifiedType(vbase, ty.getQualifiers()),
+                    loc::of(ce));
+            }
+        }
+        print.output() << fmt::nbsp;
+        cprint.printExpr(print, ce->getSubExpr(), names);
     }
 
     // A pointer conversion of the address of an under-aligned object (see
@@ -2294,9 +2351,21 @@ public:
     }
 
     void VisitCXXMemberCallExpr(const CXXMemberCallExpr *expr) {
-        print.ctor("Emember_call");
         auto callee = expr->getCallee()->IgnoreParens();
         auto method = expr->getMethodDecl();
+        // An explicit destructor call destroys a complete object, virtual
+        // bases included. BRiCk's destructor of a class with virtual bases
+        // only destroys the non-virtual part (see [wp_dtor]), and a member
+        // call would invoke exactly that.
+        if (auto dtor = dyn_cast_or_null<CXXDestructorDecl>(method)) {
+            auto cls = dtor->getParent();
+            if (cls && cls->isCompleteDefinition() &&
+                !cls->isDependentContext() && cls->getNumVBases() > 0)
+                return unsupported_expr(
+                    expr, "explicit destructor call for a class with "
+                          "virtual bases");
+        }
+        print.ctor("Emember_call");
         if (auto me = dyn_cast<MemberExpr>(callee)) {
             print.output() << fmt::BOOL(me->isArrow()) << fmt::nbsp;
 

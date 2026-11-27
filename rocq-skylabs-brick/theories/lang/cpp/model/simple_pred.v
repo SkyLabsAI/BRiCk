@@ -215,9 +215,9 @@ Lemma tu_base_layout_compatible_sound {σ tu} {Hσ : tu ⊧ σ} derived base :
 Proof.
   rewrite /tu_base_layout_compatible.
   destruct (tu.(types) !! derived) as [gd|] eqn:Hd; last discriminate.
-  destruct gd as [| |ds| | | | |]; try discriminate.
+  destruct gd as [| |ds| | | | | |]; try discriminate.
   destruct (tu.(types) !! base) as [gb|] eqn:Hb; last discriminate.
-  destruct gb as [| |bs| | | | |]; try discriminate.
+  destruct gb as [| |bs| | | | | |]; try discriminate.
   destruct (parent_offset_tu tu derived base) as [z|] eqn:Hz; last discriminate.
   intros Hcheck. apply bool_decide_eq_true in Hcheck.
   destruct Hcheck as (Hda & Hba & Hdiv & Hdz & Hnonneg & Hstrict & Hbound).
@@ -1828,6 +1828,24 @@ Module SimpleCPP.
       iDestruct (own_update with "D") as ">$"; eauto.
       by apply singleton_update, cmra_update_exclusive.
     Qed.
+
+    (* As for [mdc_path], this isn't accurate, but it is sufficient to show
+       that the laws are instantiatable: nothing in [CPP_LOGIC] introduces
+       [vbase_ptr]. *)
+    Definition vbase_ptr {_ : genv} (cls vbase : globname) (p pvb : ptr) : mpred :=
+      (* [valid_ptr nullptr] only makes the definition depend on the logic,
+         as its signature requires. *)
+      [| pvb = p |] ** valid_ptr nullptr.
+
+    Instance vbase_ptr_persistent cls vbase p pvb :
+      Persistent (vbase_ptr cls vbase p pvb) := _.
+    Instance vbase_ptr_affine cls vbase p pvb :
+      Affine (vbase_ptr cls vbase p pvb) := _.
+    Instance vbase_ptr_timeless cls vbase p pvb :
+      Timeless (vbase_ptr cls vbase p pvb) := _.
+    Instance vbase_ptr_functional cls vbase p pvb1 pvb2 :
+      Observe2 [| pvb1 = pvb2 |] (vbase_ptr cls vbase p pvb1) (vbase_ptr cls vbase p pvb2).
+    Proof. rewrite /vbase_ptr. iIntros "[-> _] [-> _]". auto. Qed.
 
     Definition tptsto (t : type) (q : cQp.t) (p : ptr) (v : val) : mpred :=
       [| p <> nullptr |] ** [| is_heap_type t |] **

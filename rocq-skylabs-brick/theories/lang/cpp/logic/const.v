@@ -133,6 +133,10 @@ Section defs.
                  (non-<<mutable>>) members and bases, which an opaque record
                  does not describe. *)
               | Gopaque _ => UNSUPPORTED Q
+              (* Changing the <<const>>-ness of an object with virtual bases
+                 would have to reach its virtual bases, which are not at a
+                 static offset. *)
+              | Gvstruct _ => UNSUPPORTED Q
               end
           | None => UNSUPPORTED Q
           end

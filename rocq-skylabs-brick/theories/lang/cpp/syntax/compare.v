@@ -928,6 +928,7 @@ Module Cast.
       | Cdynamic _ => 20
       | Cderived2base _ _ => 21
       | Cbase2derived _ _ => 22
+      | Cderived2vbase _ => 29
       | Cunsupported _ _ => 26
       end.
     Definition car (t : positive) : Set :=
@@ -944,6 +945,7 @@ Module Cast.
       | 19 => unit
       | 20 => type
       | 21 | 22 => list type * type
+      | 29 => type
       | 23 | 24 | 25 => type
       | 26 => bs * type
       | _ => unit
@@ -962,6 +964,7 @@ Module Cast.
       | Cptr2int t => t
       | Cptr2bool => ()
       | Cderived2base ns t | Cbase2derived ns t => (ns, t)
+      | Cderived2vbase t => t
       | Cintegral t => t
       | Cint2bool => ()
       | Cfloat2bool => ()
@@ -990,7 +993,7 @@ Module Cast.
       | 18 => compareT
       | 19 => compare_unit
       | 20 => compareT
-      | 21 => _compare | 22 => _compare
+      | 21 => _compare | 22 => _compare | 29 => compareT
       | 23 => _compare | 24 => _compare
       | 25 => _compare
       | 26 => _compare
@@ -1018,6 +1021,7 @@ Module Cast.
       | Cptr2bool => compare_tag (Reduce (TAG Cptr2bool))
       | Cderived2base ns t => COMP (Cderived2base ns t : Cast)
       | Cbase2derived ns t => COMP (Cbase2derived ns t : Cast)
+      | Cderived2vbase t => COMP (Cderived2vbase t : Cast)
       | Cintegral t => COMP (Cintegral t : Cast)
       | Cint2bool => compare_tag (Reduce (TAG Cint2bool))
       | Cfloat2bool => compare_tag (Reduce (TAG Cfloat2bool))

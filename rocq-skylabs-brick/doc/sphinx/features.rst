@@ -73,8 +73,18 @@ Unsupported Features
        unsupported declarations.
        `BRiCk#307 <https://github.com/SkyLabsAI/BRiCk/issues/307>`_
    * - :cpp:`virtual` inheritance (virtual base classes)
-     - Unsupported declaration
-     - This includes standard types built on it, e.g. :cpp:`std::basic_ostream`.
+     - Partial
+     - Such a class is a ``Gvstruct``: it has a size, its fields and
+       non-virtual bases have offsets, and clients can write ``Rep``\ s for
+       it (``vbaseR``). Constructors and destructors can be verified, and
+       complete objects created and destroyed, when no class in the
+       hierarchy has a :cpp:`virtual` function and no virtual base
+       overlaps the data of another subobject (overlapping padding, as
+       empty virtual bases do, is fine). Conversions to or from a
+       virtual base, :cpp:`virtual` dispatch, :cpp:`delete`,
+       :cpp:`const` objects, and explicit destructor calls are not
+       supported. This includes standard types built on it, e.g.
+       :cpp:`std::basic_ostream`.
    * - Under-aligned fields or base classes (e.g. some :cpp:`[[gnu::packed]]`
        records)
      - Unsupported declaration

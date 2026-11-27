@@ -459,10 +459,19 @@ Module decltype.
 
       Fixpoint check_list' (from : name) (ts : list exprtype) (result : name) : M () :=
         let* (gd : GlobDecl) := global from in
-        match gd with
-        | Gstruct st =>
+        (* A class with virtual bases only converts (statically) to its
+           non-virtual bases. *)
+        let bases :=
+          match gd with
+          | Gstruct st => Some st.(s_bases)
+          | Gvstruct vs => Some vs.(vs_struct).(s_bases)
+          | _ => None
+          end
+        in
+        match bases with
+        | Some bases =>
             let check nm :=
-              List.existsb (fun '(b, _) => bool_decide (type_of_classname b = Tnamed nm)) st.(s_bases)
+              List.existsb (fun '(b, _) => bool_decide (type_of_classname b = Tnamed nm)) bases
             in
             match ts with
             | nil =>
@@ -486,6 +495,24 @@ Module decltype.
         match drop_qualifiers from , drop_qualifiers result with
         | Tnamed bc , Tnamed rc =>
             check_list' bc ts rc
+        | _ , _ =>
+            throw ("cast does not start and end on named types "%bs, from, result)
+        end.
+
+      (** [check_vbase from result]: [result] is a virtual base class of
+          [from] (see [Cderived2vbase]). *)
+      Definition check_vbase (from : exprtype) (result : exprtype) : M () :=
+        match drop_qualifiers from , drop_qualifiers result with
+        | Tnamed fc , Tnamed rc =>
+            let* (gd : GlobDecl) := global fc in
+            match gd with
+            | Gvstruct vs =>
+                if List.existsb (fun '(b, _) => bool_decide (type_of_classname b = Tnamed rc)) vs.(vs_vbases)
+                then mret tt
+                else throw ("invalid virtual base class "%bs, fc, rc)
+            | _ =>
+                throw ("not a class with virtual bases "%bs, fc)
+            end
         | _ , _ =>
             throw ("cast does not start and end on named types "%bs, from, result)
         end.
@@ -552,6 +579,14 @@ Module decltype.
                          let* '(rvc, rt) := gl_or_ptr t in
                          let* _ := guard (bvc = rvc \/ (bvc = Lvalue /\ rvc = Xvalue)) in
                          let* _ := check_list rt ls bt in
+                         mret $ vc_to_type rvc $ tqualified cv rt) t
+
+        | Cderived2vbase t =>
+            let* '(bvc, bt) := gl_or_ptr base in
+            qual_norm (fun cv t =>
+                         let* '(rvc, rt) := gl_or_ptr t in
+                         let* _ := guard (bvc = rvc \/ (bvc = Lvalue /\ rvc = Xvalue)) in
+                         let* _ := check_vbase bt rt in
                          mret $ vc_to_type rvc $ tqualified cv rt) t
 
         | Cintegral t => mret t
@@ -626,6 +661,7 @@ Module decltype.
                 let* gd := global cls in
                 match gd with
                 | Gstruct st => field_type fld st.(s_fields)
+                | Gvstruct vs => field_type fld vs.(vs_struct).(s_fields)
                 | Gunion un => field_type fld un.(u_fields)
                 | _ => throw ("global scope is not an aggregate "%bs, cls, gd)
                 end

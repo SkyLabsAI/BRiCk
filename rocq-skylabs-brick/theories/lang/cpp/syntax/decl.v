@@ -135,8 +135,9 @@ Record Struct' : Set := Build_Struct
    only to keep the fields above in their established order. *)
 ; s_nonpublic_bases : list classname
   (* ^ direct bases inherited <<private>> or <<protected>>; any base not
-     listed is public. Bases are non-virtual (cpp2v rejects virtual bases),
-     and a class cannot name the same direct base twice ([class.mi]/3).
+     listed is public. Bases are non-virtual: in the [vs_struct] of a
+     [Gvstruct], only its non-virtual bases are listed, like [s_bases].
+     A class cannot name the same direct base twice ([class.mi]/3).
      <<dynamic_cast>> needs this to tell public bases apart ([expr.dynamic.cast]/9). *)
 }.
 Notation Struct := Struct'.
@@ -163,6 +164,34 @@ Definition has_vtable (s : Struct) : bool :=
 Definition has_virtual_dtor (s : Struct) : bool :=
   List.existsb (fun '(a,_) => bool_decide (a = s.(s_dtor))) s.(s_virtuals).
 #[global] Arguments has_virtual_dtor _ : assert.
+
+(** A class with <<virtual>> base classes (direct or indirect).
+
+    Each virtual base class occurs once in a complete object, at an offset
+    that depends on the most-derived class, so such a class has two layouts:
+    - its _non-virtual part_: its fields and its (direct) non-virtual base
+      classes. This is what a base-class subobject of this type occupies.
+    - the _complete object_: the non-virtual part plus one subobject for each
+      virtual base class.
+
+    [vs_struct] describes the non-virtual part exactly as [Struct] does for
+    an ordinary class, except that [s_size] and [s_alignment] are those of a
+    complete object (i.e. <<sizeof>> and <<alignof>>). *)
+Record VStruct' : Set := Build_VStruct
+{ vs_struct : Struct
+  (* ^ the non-virtual part. [s_bases] lists only the direct _non-virtual_
+     base classes. *)
+; vs_vbases : list (classname * LayoutInfo)
+  (* ^ all virtual base classes, direct and indirect, in initialization order
+     (depth-first, left-to-right), each with its offset in a complete object
+     of this class. The offsets are implementation-dependent. *)
+; vs_nv_alignment : N
+  (* ^ alignment of the non-virtual part *)
+}.
+Notation VStruct := VStruct'.
+#[global] Arguments Build_VStruct _ _ _ : assert.
+#[global] Instance VStruct_eq_dec : EqDecision VStruct.
+Proof. solve_decision. Defined.
 
 Variant Ctor_type : Set := Ct_Complete | Ct_Base | Ct_alloc | Ct_Comdat.
 #[global] Instance: EqDecision Ctor_type.

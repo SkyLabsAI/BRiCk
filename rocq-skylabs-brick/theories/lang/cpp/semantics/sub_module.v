@@ -91,7 +91,8 @@ Definition GlobDecl_le (a b : GlobDecl) : bool :=
   | Gtype , Gunion _
   | Gtype , Gstruct _
   | Gtype , Gunsupported _
-  | Gtype , Gopaque _ => true
+  | Gtype , Gopaque _
+  | Gtype , Gvstruct _ => true
   | Gunion _ , Gtype
   | Gstruct _ , Gtype => false
   | Gunion u , Gunion u' =>
@@ -112,6 +113,8 @@ Definition GlobDecl_le (a b : GlobDecl) : bool :=
   | Gunsupported m , Gunsupported m' => bool_decide (m = m')
   (* An opaque record is only compatible with itself. *)
   | Gopaque o , Gopaque o' => bool_decide (o = o')
+  (* Like a struct, a struct with virtual bases is only compatible with itself. *)
+  | Gvstruct s , Gvstruct s' => bool_decide (s = s')
   | _ , _ => false
   end.
 Definition GlobDecl_ler := λ g1 g2, Is_true $ GlobDecl_le g1 g2.
@@ -722,6 +725,15 @@ Lemma sub_module_preserves_gstruct m1 m2 gn st :
   sub_module m1 m2 ->
   m1.(types) !! gn = Some (Gstruct st) ->
   m2.(types) !! gn = Some (Gstruct st).
+Proof.
+  move=> Hsub /(sub_module_preserves_globdecl Hsub) {Hsub m1 m2} [g2 [->]].
+  destruct g2 => //=. intros; do_bool_decide; subst; smash.
+Qed.
+
+Lemma sub_module_preserves_gvstruct m1 m2 gn vs :
+  sub_module m1 m2 ->
+  m1.(types) !! gn = Some (Gvstruct vs) ->
+  m2.(types) !! gn = Some (Gvstruct vs).
 Proof.
   move=> Hsub /(sub_module_preserves_globdecl Hsub) {Hsub m1 m2} [g2 [->]].
   destruct g2 => //=. intros; do_bool_decide; subst; smash.

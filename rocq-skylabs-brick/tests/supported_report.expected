@@ -12,12 +12,11 @@
         {|
           report.input := "by_value_virt(Virt)";
           report.resolved := "by_value_virt(Virt)";
-          report.status := "blocked";
+          report.status := "partial";
           report.unsupported := [];
-          report.partial := [];
-          report.blocked_by :=
-            [("Virt"%pstring,
-              ["virtual base classes are not supported"%pstring])];
+          report.partial :=
+            ["class with virtual bases: virtual functions and const objects are not modelled"%pstring];
+          report.blocked_by := [];
           report.unsupported_refs := []
         |};
         {|
@@ -326,7 +325,7 @@
         ("arrow_union(U*)"%pstring, "partial"%pstring);
         ("by_pointer(Bits*)"%pstring, "supported"%pstring);
         ("by_value(Bits)"%pstring, "partial"%pstring);
-        ("by_value_virt(Virt)"%pstring, "blocked"%pstring);
+        ("by_value_virt(Virt)"%pstring, "partial"%pstring);
         ("call_through(Bits*)"%pstring, "partial"%pstring);
         ("calls_static_local()"%pstring, "supported"%pstring);
         ("cas_int(int*, int*, int)"%pstring, "supported"%pstring);
@@ -378,7 +377,7 @@
         ("Node::Node()"%pstring, "partial"%pstring);
         ("U::U()"%pstring, "partial"%pstring);
         ("VBase::VBase()"%pstring, "partial"%pstring);
-        ("Virt::Virt()"%pstring, "blocked"%pstring);
+        ("Virt::Virt()"%pstring, "partial"%pstring);
         ("std::type_info::type_info()"%pstring, "partial"%pstring);
         ("Anon::.x::<ctor>()"%pstring, "partial"%pstring);
         ("Anon::Anon(const Anon&)"%pstring, "partial"%pstring);
@@ -390,7 +389,7 @@
         ("Node::Node(const Node&)"%pstring, "partial"%pstring);
         ("U::U(const U&)"%pstring, "supported"%pstring);
         ("VBase::VBase(const VBase&)"%pstring, "partial"%pstring);
-        ("Virt::Virt(const Virt&)"%pstring, "blocked"%pstring);
+        ("Virt::Virt(const Virt&)"%pstring, "partial"%pstring);
         ("std::type_info::type_info(const std::type_info&)"%pstring,
          "partial"%pstring);
         ("Anon::.x::<ctor>(Anon::.x const&)"%pstring, "supported"%pstring);
@@ -402,7 +401,7 @@
         ("Node::Node(Node&&)"%pstring, "partial"%pstring);
         ("U::U(U&&)"%pstring, "supported"%pstring);
         ("VBase::VBase(VBase&&)"%pstring, "partial"%pstring);
-        ("Virt::Virt(Virt&&)"%pstring, "blocked"%pstring);
+        ("Virt::Virt(Virt&&)"%pstring, "partial"%pstring);
         ("Anon::.x::<ctor>(Anon::.x&&)"%pstring, "supported"%pstring);
         ("Anon::~Anon()"%pstring, "supported"%pstring);
         ("Base::~Base()"%pstring, "supported"%pstring);
@@ -413,7 +412,7 @@
         ("Node::~Node()"%pstring, "supported"%pstring);
         ("U::~U()"%pstring, "supported"%pstring);
         ("VBase::~VBase()"%pstring, "supported"%pstring);
-        ("Virt::~Virt()"%pstring, "blocked"%pstring);
+        ("Virt::~Virt()"%pstring, "partial"%pstring);
         ("std::type_info::~type_info()"%pstring, "supported"%pstring);
         ("Anon::.x::<dtor>"%pstring, "supported"%pstring);
         ("Anon::operator=(const Anon&)"%pstring, "partial"%pstring);
@@ -425,7 +424,7 @@
         ("Node::operator=(const Node&)"%pstring, "partial"%pstring);
         ("U::operator=(const U&)"%pstring, "supported"%pstring);
         ("VBase::operator=(const VBase&)"%pstring, "partial"%pstring);
-        ("Virt::operator=(const Virt&)"%pstring, "blocked"%pstring);
+        ("Virt::operator=(const Virt&)"%pstring, "partial"%pstring);
         ("std::type_info::operator=(const std::type_info&)"%pstring,
          "partial"%pstring);
         ("Anon::.x::operator=(const Anon::.x&)"%pstring, "supported"%pstring);
@@ -437,7 +436,7 @@
         ("Node::operator=(Node&&)"%pstring, "partial"%pstring);
         ("U::operator=(U&&)"%pstring, "supported"%pstring);
         ("VBase::operator=(VBase&&)"%pstring, "partial"%pstring);
-        ("Virt::operator=(Virt&&)"%pstring, "blocked"%pstring);
+        ("Virt::operator=(Virt&&)"%pstring, "partial"%pstring);
         ("Anon::.x::operator=(Anon::.x&&)"%pstring, "supported"%pstring);
         ("std::type_info::operator==(const std::type_info&) const"%pstring,
          "supported"%pstring);
@@ -450,7 +449,7 @@
         ("Node"%pstring, "supported"%pstring);
         ("U"%pstring, "supported"%pstring);
         ("VBase"%pstring, "supported"%pstring);
-        ("Virt"%pstring, "unsupported"%pstring);
+        ("Virt"%pstring, "partial"%pstring);
         ("__NSConstantString"%pstring, "supported"%pstring);
         ("__builtin_ms_va_list"%pstring, "supported"%pstring);
         ("__builtin_va_list"%pstring, "supported"%pstring);
@@ -460,8 +459,7 @@
         ("std::type_info"%pstring, "supported"%pstring);
         ("Anon::.x"%pstring, "supported"%pstring)]
      : list (string * string)
-     = ["virtual base classes are not supported"%pstring;
-        "atomic compare-exchange on non-integer values"%pstring;
+     = ["atomic compare-exchange on non-integer values"%pstring;
         "switch: case or default nested in a statement or after a declaration"%pstring;
         "inline assembly"%pstring;
         "switch: case or default nested in a statement or after a declaration"%pstring;
@@ -502,6 +500,7 @@ default_initialize.unlock: ... = ...
 wp_method_intro: ..., ...
 wp_method_elim: ..., ...
 wp_method.unlock: ... = ...
+wp_init_inherited_constructor: ..., ...
 wp_lval_typeid_expr: ..., ...
 destroy_val_elim: ..., ...
 destroy_val_unfold: ..., ...

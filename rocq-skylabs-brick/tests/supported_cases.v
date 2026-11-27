@@ -44,6 +44,18 @@ B mk();
 void use(B);
 void prvalue() { use(mk()); }
 
+// a conversion to a non-virtual base of a class with a virtual base: each
+// step has a static offset (SkyLabsAI/BRiCk#513).
+struct NB { int n; };
+struct LN : virtual VB, NB { int l; };
+int to_nonvirtual_base(LN &x) { NB &b = x; return b.n; }
+
+// a call to a member of a virtual base converts to the virtual base
+// (SkyLabsAI/BRiCk#514).
+struct VO { int v; bool ok() const { return v != 0; } };
+struct LO : virtual VO { int l; };
+bool to_virtual_base(LO &x) { return x.ok(); }
+
 // declaration only.
 int ext(int);
 
@@ -154,7 +166,7 @@ Eval vm_compute in List.map show (supported.report.run source
   [ "va(__builtin_va_list)"; "get_tls()"
   ; "load_sc(int*)"; "load_relaxed(int*)"; "load_order(int*, int)"
   ; "test_and_set(bool*)"; "fetch_max(int*)"; "generic_store(int*, int*)"
-  ; "dtor_local()"; "prvalue()"; "ext(int)"; "calls_setjmp()"
+  ; "dtor_local()"; "prvalue()"; "to_nonvirtual_base(LN&)"; "to_virtual_base(LO&)"; "ext(int)"; "calls_setjmp()"
   ; "dot_member(S&, int S::*)"; "arrow_member(S*, int S::*)"; "call_member(S&, int (S::*)())"
   ; "stmt_expr()"; "off()"; "label_only()"; "local_label()"; "local_label_only()"; "local_label_tmpl<int>(int)"; "labeled_decl_switch()"; "fam(M*)"; "braceless(int)"
   ; "lib_memcpy(char*, const char*)"; "lib_strlen(const char*)"; "direct_memcpy(char*, const char*)"
