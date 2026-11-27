@@ -231,6 +231,25 @@ Proof.
   - by destruct osz; constructor.
 Qed.
 
+(** [class_free_type ty] holds when [ty] contains no class type, looking
+    through arrays and qualifiers. An object of such a type is never a base
+    subobject, and the ABI does not reuse its tail, so it owns [size_of σ ty]
+    bytes wherever it sits. A class object need not: as a potentially-overlapping
+    subobject (a base, or a <<[[no_unique_address]]>> member) it may own fewer
+    (<https://eel.is/c++draft/expr.sizeof#1>,
+    <https://eel.is/c++draft/intro.object#7>). Laws that give an object
+    [size_of] bytes from its type alone hold only at these types; see
+    <<noimport/doc/cpp/sizeof.md>>.
+
+    cpp2v prints [Trealigned] only around scalar types, so this does not look
+    through it. *)
+Fixpoint class_free_type (ty : type) : bool :=
+  match ty with
+  | Tnamed _ => false
+  | Tarray t _ | Tqualified _ t => class_free_type t
+  | _ => true
+  end.
+
 (** [RealignOk σ ty] says that [ty]'s size, if any, is a multiple of the
     alignment [ty] states through [Trealigned]. It excludes over-aligned types
     such as [Trealigned 32 Tint]. Pointer arithmetic on [ty] requires it:

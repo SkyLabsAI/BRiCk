@@ -2197,6 +2197,8 @@ Module SimpleCPP.
 
     Lemma type_ptr_obj_repr_byte :
       forall  (ty : type) (p : ptr) (i sz : N),
+        class_free_type ty ->     (* 0) unused here: the model gives every object
+                                        [size_of] bytes; see [pred.v] *)
         size_of σ ty = Some sz -> (* 1) [ty] has some byte-size [sz] *)
         (i < sz)%N ->             (* 2) by (1), [sz] is nonzero and [i] is a
                                         byte-offset into the object rooted at [p ,, o]
@@ -2215,7 +2217,7 @@ Module SimpleCPP.
            v *)
         type_ptr ty p |-- type_ptr Tbyte (p ,, (o_sub σ Tbyte i)).
     Proof.
-      intros ty p i sz Hsz Hi. iIntros "#Htype".
+      intros ty p i sz _ Hsz Hi. iIntros "#Htype".
       have Hbyte : size_of σ Tbyte = Some 1%N by done.
       iDestruct (type_ptr_subscript_valid ty p sz Tbyte 1 (Z.of_N i) pred.Strict
         Hsz Hbyte ltac:(lia) ltac:(intros _; right; lia) with "Htype") as "#Vi".
@@ -2234,17 +2236,18 @@ Module SimpleCPP.
 
     Lemma type_ptr_obj_repr :
       forall (ty : type) (p : ptr) (sz : N),
+        class_free_type ty ->
         size_of σ ty = Some sz ->
         type_ptr ty p |-- [∗list] i ∈ seqN 0 sz, type_ptr Tbyte (p ,, o_sub σ Tbyte (Z.of_N i)).
     Proof.
-      intros * Hsz; iIntros "#tptr".
+      intros * Hty Hsz; iIntros "#tptr".
       iApply big_sepL_intro; iIntros "!>" (k n) "%Hn'".
       assert (lookup (K:=N) (N.of_nat k) (seqN 0%N sz) = Some n)
         as Hn
         by (unfold lookupN, list_lookupN; rewrite Nat2N.id //);
         clear Hn'.
       apply lookupN_seqN in Hn as [? ?].
-      iDestruct (type_ptr_obj_repr_byte ty p n sz Hsz ltac:(lia) with "tptr") as "$".
+      iDestruct (type_ptr_obj_repr_byte ty p n sz Hty Hsz ltac:(lia) with "tptr") as "$".
     Qed.
 
     (* [offset_congP] hoists [offset_cong] to [mpred] *)

@@ -148,10 +148,11 @@ Section raw_type_ptrs.
 
   Lemma type_ptr_raw_type_ptrs :
     forall (ty : type) (p : ptr),
+      class_free_type ty ->
       is_Some (size_of σ ty) ->
       type_ptr ty p |-- raw_type_ptrs ty p.
   Proof.
-    intros * Hsz; rewrite raw_type_ptrs_eq/raw_type_ptrs_def.
+    intros * Hty Hsz; rewrite raw_type_ptrs_eq/raw_type_ptrs_def.
     destruct Hsz as [sz Hsz].
     iIntros "#tptr"; iExists sz; iFrame "%".
     by iApply type_ptr_obj_repr.
@@ -459,11 +460,12 @@ Section primR_transport.
   Context `{Σ : cpp_logic} {σ : genv}.
 
   Lemma _at_primR_ptr_congP_transport p p' ty q v :
+    class_free_type ty ->
     is_Some (size_of σ ty) ->
     ptr_congP σ p p' ** type_ptr ty p' |-- p |-> primR ty q v -* p' |-> primR ty q v.
   Proof.
     rewrite primR_to_rawsR !_at_exists.
-    iIntros ([sz Hsz]) "#[cong tptr'] [%rs prim]"; iExists rs.
+    iIntros (Hty [sz Hsz]) "#[cong tptr'] [%rs prim]"; iExists rs.
     iDestruct (type_ptr_raw_type_ptrs with "tptr'") as "raw_tptrs"; eauto.
     rewrite raw_type_ptrs_eq/raw_type_ptrs_def.
     iDestruct "raw_tptrs" as (sz') "[%Hsz' tptrs]"; simplify_eq.
@@ -560,10 +562,11 @@ Section with_rawable.
   Qed.
 
   Lemma R_ptr_congP_transport_via_rawsR :
+    class_free_type ty ->
     forall (p p' : ptr) q (x : X),
       ptr_congP σ p p' ** type_ptr ty p' |-- p |-> R q x -* p' |-> R q x.
   Proof using decode encode enc_dec_uniq sz Hdecode_sz Hencode_sz Hsz HR_decode HR_encode Hnonzero.
-    intros p p' q x; rewrite HR_encode.
+    intros Hty p p' q x; rewrite HR_encode.
     iIntros "#[cong tptr'] [#tptr H]"; iDestruct "H" as (rs) "[%Henc raws]".
     iDestruct (type_ptr_raw_type_ptrs with "tptr'") as "#raw_tptrs'"; auto.
     assert (rs <> []) as Hrs_nonnil
@@ -663,6 +666,7 @@ Section blockR_transport.
    *)
   Lemma blockR_ptr_congP_transport (sz : N) :
     forall (p p' : ptr) (ty : type) q,
+      class_free_type ty ->
       size_of σ ty = Some sz ->
           ptr_congP σ p p' ** type_ptr ty p ** type_ptr ty p'
       |-- p |-> blockR sz q -* p' |-> blockR sz q.
@@ -678,13 +682,14 @@ Section typed_array_blocks.
   Context `{Σ : cpp_logic} {σ : genv}.
 
   Lemma type_ptr_byte_end (p : ptr) (ty : Rtype) (sz : N) :
+    class_free_type ty ->
     size_of σ ty = Some sz ->
     type_ptr ty p |-- valid_ptr (p .[ Tbyte ! Z.of_N sz ]).
   Proof.
-    intros Hsz. destruct (N.eq_dec sz 0%N) as [->|Hnz].
+    intros Hty Hsz. destruct (N.eq_dec sz 0%N) as [->|Hnz].
     - rewrite offset_ptr_sub_0 //. apply type_ptr_valid.
     - iIntros "#T".
-      iDestruct (type_ptr_obj_repr_byte ty p (N.pred sz) sz Hsz ltac:(lia) with "T") as "#B".
+      iDestruct (type_ptr_obj_repr_byte ty p (N.pred sz) sz Hty Hsz ltac:(lia) with "T") as "#B".
       iDestruct (type_ptr_valid_plus_one with "B") as "V".
       iEval (rewrite o_sub_sub) in "V".
       have Hz : (Z.of_N (N.pred sz) + 1 = Z.of_N sz)%Z by lia.
@@ -707,6 +712,7 @@ Section typed_array_blocks.
 
   Lemma type_ptr_array_element_block (p : ptr) (ty : Rtype)
       (n i sz : N) (q : cQp.t) :
+    class_free_type ty ->
     size_of σ ty = Some sz ->
     realign_ok ty sz = true ->
     (i < n)%N ->
@@ -714,7 +720,7 @@ Section typed_array_blocks.
       (p .[ Tbyte ! Z.of_N (i * sz) ] |-> blockR sz q
        ∗-∗ p .[ ty ! Z.of_N i ] |-> blockR sz q).
   Proof.
-    intros Hsz Hok Hi. iIntros "#T".
+    intros Hty Hsz Hok Hi. iIntros "#T".
     iDestruct (type_ptr_o_sub p i n ty Hi with "T") as "#E".
     destruct (N.eq_dec sz 0%N) as [->|Hnz].
     - rewrite N.mul_0_r !offset_ptr_sub_0 // blockR_eq /blockR_def /=.
@@ -722,15 +728,15 @@ Section typed_array_blocks.
       iSplit; iIntros "_"; by iApply type_ptr_valid.
     - have Harray : size_of σ (Tarray ty n) = Some (n * sz)%N.
       { by rewrite /= Hsz Hok /=. }
-      iDestruct (type_ptr_raw_type_ptrs with "T") as "#RA"; first by eexists.
-      iDestruct (type_ptr_raw_type_ptrs with "E") as "#RT"; first by eexists.
+      iDestruct (type_ptr_raw_type_ptrs with "T") as "#RA"; [done|by eexists|].
+      iDestruct (type_ptr_raw_type_ptrs with "E") as "#RT"; [done|by eexists|].
       iDestruct (raw_type_ptrs_Tarray_elem i p ty n sz ltac:(lia) Hsz Hi with "RA") as "#RB".
       have Hz : (Z.of_N sz * Z.of_N i = Z.of_N (i * sz))%Z by lia.
       iEval (rewrite Hz) in "RB".
       iDestruct (type_ptr_obj_repr_byte (Tarray ty n) p (i * sz) (n * sz)
-        Harray ltac:(nia) with "T") as "#B".
+        Hty Harray ltac:(nia) with "T") as "#B".
       iDestruct (type_ptr_obj_repr_byte ty (p .[ ty ! Z.of_N i ]) 0 sz
-        Hsz ltac:(lia) with "E") as "#EB".
+        Hty Hsz ltac:(lia) with "E") as "#EB".
       iEval (rewrite offset_ptr_sub_0 //) in "EB".
       have Hcong : ptr_cong σ (p .[ Tbyte ! Z.of_N (i * sz) ]) (p .[ ty ! Z.of_N i ]).
       { apply offset_ptr_cong. apply (offset_cong_subs 1 sz); [done|done|nia]. }
@@ -763,7 +769,7 @@ Section typed_array_blocks.
     { rewrite aligned_ofR.unlock Hal. iSplit.
       - iIntros "(%a & %Ha & H)". by simplify_eq.
       - iIntros "H". iExists al. by iFrame. }
-    iDestruct (type_ptr_array_element_block p ty n i sz q Hsz Hok Hi with "T") as "#C".
+    iDestruct (type_ptr_array_element_block p ty n i sz q Hraw Hsz Hok Hi with "T") as "#C".
     iDestruct (type_ptr_o_sub p i n ty Hi with "T") as "#E".
     iDestruct (type_ptr_aligned_ofR with "E") as "#EA".
     iDestruct (type_ptr_aligned_ofR with "T") as "#A".
@@ -807,7 +813,7 @@ Section typed_array_blocks.
         have HiZ : Z.of_N (N.of_nat i) = Z.of_nat i by lia.
         iEval (rewrite HiZ) in "C". by iApply "C".
     - iIntros "(A & _ & B)". iFrame "A". iSplit.
-      + rewrite _at_validR. iApply (type_ptr_byte_end p (Tarray ty n) (n * sz)%N with "T").
+      + rewrite _at_validR. iApply (type_ptr_byte_end p (Tarray ty n) (n * sz)%N Hraw with "T").
         by rewrite /= Hsz Hok /=.
       + iApply (big_sepL_impl with "B"). iIntros "!>" (k i Hi) "B".
         have Hin : (N.of_nat i < n)%N.
