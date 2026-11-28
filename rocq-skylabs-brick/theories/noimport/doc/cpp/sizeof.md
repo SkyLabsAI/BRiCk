@@ -85,3 +85,33 @@ Deliberately not trusted:
    `tblockR (Tnamed cls)` is `blockR sizeof ** alignedR` at every position.
 3. Optionally, evidence of an object's position (complete object, array element or ordinary member).
    With it, other classes own `sizeof` bytes wherever they are not potentially overlapping.
+
+## Portability limits
+
+BRiCk's intended scope is the Itanium ABI. This note adds no support for other ABIs.
+
+What carries over to every conforming C++ implementation, with the usual bit-field and lifetime
+qualifications ([[expr.sizeof]](https://eel.is/c++draft/expr.sizeof)):
+- Complete objects and array elements have the extent described by `sizeof`, and array stride is `sizeof(T)`.
+- Potentially-overlapping subobjects do not have that full-size guarantee.
+- An unconditional full-size reading of class `tblockR` therefore stays unjustified.
+
+What does not carry over: the `dsize == nvsize == sizeof` rule in the previous section is not exported
+to an ABI nobody has reviewed. Each ABI needs its own justification, because:
+- Clang's Microsoft layout builder is separate from its Itanium one. Both expose `getDataSize()` and
+  `getNonVirtualSize()`, but the shared names do not show that padding or ownership behave the same
+  ([RecordLayoutBuilder.cpp](https://github.com/llvm/llvm-project/blob/main/clang/lib/AST/RecordLayoutBuilder.cpp)).
+- Microsoft virtual inheritance uses different layout machinery, including `vbptr` and, in some cases,
+  `vtordisp` ([MicrosoftCXXABI.cpp](https://github.com/llvm/llvm-project/blob/main/clang/lib/CodeGen/MicrosoftCXXABI.cpp)).
+  A storage account has to cover the actual target layout.
+- Microsoft layout also varies by target: Clang handles reuse of overaligned base padding differently on
+  Windows ARM64 than on x64 and ARM64EC.
+
+The review behind this note found no cross-ABI counterexample to the size-equality condition itself. The
+generalization has simply not been justified. Extent, alignment and ownership are separate obligations,
+and each needs its own argument for a new target.
+
+Relative vtables and arm64e pointer authentication leave the `sizeof` distinctions above intact. They do
+call for extra care if a document ever claims that raw bytes can be interpreted or moved as
+virtual-table or function pointers. Keep that question apart from storage extent. See the
+[Clang pointer authentication documentation](https://clang.llvm.org/docs/PointerAuthentication.html).
