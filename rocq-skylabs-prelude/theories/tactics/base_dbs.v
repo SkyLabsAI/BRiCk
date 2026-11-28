@@ -14,4 +14,10 @@
  *)
 Create HintDb sl_opacity discriminated.
 
+(* Typeclass search deeper than this is most likely a loop between instances:
+   report it as an error with the goals on the offending branch, instead of
+   backtracking into other instances. [#[global]] since most files only
+   [Require] this one, e.g. via [skylabs.prelude.base]. *)
+#[global] Set Typeclasses Fatal Depth 30.
+
 Create HintDb pure discriminated.
