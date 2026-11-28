@@ -230,6 +230,106 @@ void addOpt(ClangTool &Tool, const char *opt, std::optional<std::string> value,
     }
 }
 
+static cl::list<std::string> RemapDirs(
+    "remap-dir",
+    cl::desc("FROM=TO: read a file under directory FROM from the same "
+             "relative path under TO when that file exists there. Relative "
+             "FROM and TO are resolved against the working directory at "
+             "startup. Paths already under TO are left alone. Example, "
+             "run from <root>/_build/default: --remap-dir=../..=."),
+    cl::value_desc("FROM=TO"), cl::ZeroOrMore, cl::cat(Cpp2V));
+
+// PROTOTYPE (skylabs-fm#436). A file system that sends lookups of
+// FROM/rel to TO/rel when TO/rel exists, and falls back to FROM/rel
+// otherwise.
+//
+// dune copies each source file R/rel to R/_build/default/rel, and the
+// tools are run on the copy while -I flags from compile_commands.json
+// still name R. Without remapping, one header can be reached both as
+// the copy and as the original: two inodes, so clang's `#pragma once`
+// (which identifies files by inode) does not deduplicate them. With
+// --remap-dir=R=R/_build/default every reachable copy is read through
+// one inode, whichever spelling found it.
+class RemapFileSystem : public vfs::ProxyFileSystem {
+    struct Mapping {
+        std::string From, To;
+    };
+    std::vector<Mapping> Mappings;
+
+    static bool isUnder(StringRef Path, StringRef Dir) {
+        return Path == Dir ||
+               (Path.starts_with(Dir) && sys::path::is_separator(Path[Dir.size()]));
+    }
+
+    // The remapped spelling of Path, if any mapping applies and the
+    // target exists.
+    std::optional<std::string> remap(const Twine &Path) {
+        SmallString<256> Abs;
+        Path.toVector(Abs);
+        if (getUnderlyingFS().makeAbsolute(Abs))
+            return std::nullopt;
+        sys::path::remove_dots(Abs, /*remove_dot_dot=*/true);
+        for (const auto &M : Mappings) {
+            if (!isUnder(Abs, M.From) || isUnder(Abs, M.To))
+                continue;
+            SmallString<256> Target(M.To);
+            sys::path::append(Target, Abs.str().substr(M.From.size()));
+            if (getUnderlyingFS().exists(Target))
+                return std::string(Target.str());
+        }
+        return std::nullopt;
+    }
+
+public:
+    RemapFileSystem(IntrusiveRefCntPtr<vfs::FileSystem> FS)
+        : ProxyFileSystem(std::move(FS)) {}
+
+    // Adds FROM=TO, resolving relative paths against the current
+    // working directory. Returns false on a malformed argument.
+    bool addMapping(StringRef Arg) {
+        auto [From, To] = Arg.split('=');
+        if (From.empty() || To.empty())
+            return false;
+        auto Norm = [&](StringRef P) {
+            SmallString<256> S(P);
+            getUnderlyingFS().makeAbsolute(S);
+            sys::path::remove_dots(S, /*remove_dot_dot=*/true);
+            return std::string(S.str());
+        };
+        Mappings.push_back({Norm(From), Norm(To)});
+        logging::log(logging::Level::VERBOSER)
+            << "Remapping " << Mappings.back().From << " to "
+            << Mappings.back().To << "\n";
+        return true;
+    }
+
+    ErrorOr<vfs::Status> status(const Twine &Path) override {
+        if (auto T = remap(Path)) {
+            auto S = getUnderlyingFS().status(*T);
+            if (!S)
+                return S;
+            // Keep the requested name; the inode is the target's, which is
+            // what lets FileManager identify both spellings.
+            return vfs::Status::copyWithNewName(*S, Path);
+        }
+        return ProxyFileSystem::status(Path);
+    }
+
+    ErrorOr<std::unique_ptr<vfs::File>>
+    openFileForRead(const Twine &Path) override {
+        if (auto T = remap(Path))
+            return vfs::File::getWithPath(
+                getUnderlyingFS().openFileForRead(*T), Path);
+        return ProxyFileSystem::openFileForRead(Path);
+    }
+
+    bool exists(const Twine &Path) override {
+        if (remap(Path))
+            return true;
+        return ProxyFileSystem::exists(Path);
+    }
+};
+
 int main(int argc, const char **argv) {
     auto MaybeOptionsParser = CommonOptionsParser::create(argc, argv, Cpp2V);
     if (not MaybeOptionsParser) {
@@ -254,8 +354,22 @@ int main(int argc, const char **argv) {
     }
 
     auto DiagOptions = new DiagnosticOptions();
+    IntrusiveRefCntPtr<vfs::FileSystem> BaseFS = vfs::getRealFileSystem();
+    if (!RemapDirs.empty()) {
+        auto Remap = makeIntrusiveRefCnt<RemapFileSystem>(BaseFS);
+        for (const auto &Arg : RemapDirs) {
+            if (!Remap->addMapping(Arg)) {
+                llvm::errs() << "cpp2v: malformed --remap-dir=" << Arg
+                             << " (expected FROM=TO)\n";
+                return 1;
+            }
+        }
+        BaseFS = Remap;
+    }
+
     ClangTool Tool(OptionsParser.getCompilations(),
-                   OptionsParser.getSourcePathList());
+                   OptionsParser.getSourcePathList(),
+                   std::make_shared<PCHContainerOperations>(), BaseFS);
 
     if (!NoSystem.getValue()) {
         addOpt(Tool, "-resource-dir=", getClangResourceDir(),
